@@ -25,6 +25,12 @@ LOCATION_NAME = "San Diego"
 LOCATION_FLAVOR = "tourism seasons, border trade, the military community, and beach/surf culture"
 ANTHROPIC_MODEL = "claude-sonnet-4-6"
 
+# Booking notification. FROM must be on a domain onboarded to Cloudflare Email Sending
+# (l8ti.com). TO is the owner address that receives alerts — set before launch; the email
+# send no-ops while TO is blank, so bookings still persist either way.
+BOOKING_NOTIFY_FROM = "bookings@l8ti.com"
+BOOKING_NOTIFY_TO = ""
+
 # Backend path for plan/chat generation:
 #   "true"  → drive the Managed Agent (sessions) below
 #   "false" → call the Messages API directly with structured outputs
@@ -36,6 +42,11 @@ AGENT_ENV_ID = "env_015fkJc7jYAiMT6vN1DMPMBt"
 # Per-IP rate limiting (Workers Rate Limiting, GA) as a backstop behind Turnstile on the
 # credit-spending endpoints. period must be 10 or 60 (seconds). Enforced on Cloudflare's
 # network only (not in local `wrangler dev`).
+# Cloudflare Email Sending binding — used to email the owner on a new booking. The FROM
+# domain (l8ti.com) must be onboarded: `wrangler email sending enable l8ti.com`.
+[[send_email]]
+name = "EMAIL"
+
 [[ratelimits]]
 name = "PLAN_RATE_LIMITER"
 namespace_id = "1001"

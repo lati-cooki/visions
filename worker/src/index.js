@@ -12,7 +12,7 @@ import { chatHandler } from "./handlers/chat.js";
 import { bookingHandler } from "./handlers/booking.js";
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (request.method === "OPTIONS") return preflight();
 
     const url = new URL(request.url);
@@ -41,7 +41,7 @@ export default {
         case "chat":
           return await chatHandler(request, env);
         case "booking":
-          return await bookingHandler(request, env);
+          return await bookingHandler(request, env, ctx);
         default:
           return error("Not found.", 404);
       }
