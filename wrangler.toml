@@ -24,3 +24,11 @@ database_id = "bc66bda7-fb57-445b-8d1c-7d92e2e865a3"
 LOCATION_NAME = "San Diego"
 LOCATION_FLAVOR = "tourism seasons, border trade, the military community, and beach/surf culture"
 ANTHROPIC_MODEL = "claude-sonnet-4-6"
+
+# Backend path for plan/chat generation:
+#   "true"  → drive the Managed Agent (sessions) below
+#   "false" → call the Messages API directly with structured outputs
+# Both paths still authenticate with the ANTHROPIC_API_KEY secret.
+USE_MANAGED_AGENT = "true"
+AGENT_ID = "agent_011CZtoh5iVJGPjFmdXkSDzo"
+AGENT_ENV_ID = "env_015fkJc7jYAiMT6vN1DMPMBt"

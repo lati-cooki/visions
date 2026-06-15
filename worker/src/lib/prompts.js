@@ -113,3 +113,46 @@ export function buildChatRequest({ profile, headline, history, message }, env) {
     messages: [...priorTurns, { role: "user", content: message }],
   };
 }
+
+// ── Managed Agent message bodies ──
+// When the backend drives the Managed Agent (USE_MANAGED_AGENT) instead of the Messages API,
+// the agent's persona/instructions live in its system prompt (agents/visions-advisor.agent.yaml),
+// so here we only send the user message — prefixed with a mode marker the agent keys off.
+
+export function buildPlanMessage(profile) {
+  const lines = [
+    "[PLAN_REQUEST]",
+    "THEIR PROFILE:",
+    `- Business type: ${profile.businessType}`,
+    `- Top pain points: ${profile.painPoints.join("; ")}`,
+    `- Team size: ${profile.teamSize || "unspecified"}`,
+    `- Monthly budget for AI tools: ${profile.budget || "unspecified"}`,
+  ];
+  if (profile.extraContext) lines.push(`- Additional context: ${profile.extraContext}`);
+  return lines.join("\n");
+}
+
+export function buildChatMessage({ profile, headline, history, message }) {
+  const p = profile || {};
+  const pains = Array.isArray(p.painPoints) ? p.painPoints.join(", ") : "";
+  const convo = (Array.isArray(history) ? history : [])
+    .filter(
+      (m) =>
+        m &&
+        (m.role === "user" || m.role === "assistant") &&
+        typeof m.content === "string"
+    )
+    .map((m) => `${m.role === "user" ? "Owner" : "Advisor"}: ${m.content}`)
+    .join("\n");
+
+  return [
+    "[FOLLOWUP_REQUEST]",
+    `Business: ${p.businessType || "n/a"} (team: ${p.teamSize || "n/a"}, budget: ${p.budget || "n/a"})`,
+    pains ? `Pain points: ${pains}` : null,
+    headline ? `Plan headline: ${headline}` : null,
+    convo ? `Conversation so far:\n${convo}` : null,
+    `Question: ${message}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}

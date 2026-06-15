@@ -22,14 +22,20 @@ ant beta:agents update --agent-id agent_011CZtoh5iVJGPjFmdXkSDzo --version "$V" 
     < agents/visions-advisor.agent.yaml
 ```
 
-## How the backend would use it (not yet wired)
+## How the backend uses it (wired)
 
-Per request, the Worker would:
+The Worker drives this agent when `USE_MANAGED_AGENT = "true"` (wrangler.toml). Per request
+(`worker/src/lib/agents.js`):
 
-1. `POST /v1/sessions` — create a session referencing the agent + `env_015fkJc7jYAiMT6vN1DMPMBt`.
-2. `POST /v1/sessions/{id}/events` — send the business profile (plan mode) or question (chat mode).
-3. Stream `GET /v1/sessions/{id}/events/stream` until `session.status_idle`.
-4. Read the final `agent.message` text → parse the plan JSON / return the chat reply.
+1. `POST /v1/sessions` — create a session referencing `AGENT_ID` + `AGENT_ENV_ID`.
+2. `POST /v1/sessions/{id}/events` — send the user message. The Worker prefixes it with a mode
+   marker (`[PLAN_REQUEST]` or `[FOLLOWUP_REQUEST]`) that this agent's system prompt keys off.
+3. Poll `GET /v1/sessions/{id}/events` until `session.status_idle` (terminal).
+4. Concatenate the `agent.message` text → parse the plan JSON / return the chat reply.
+5. Best-effort `DELETE` the session.
+
+Set `USE_MANAGED_AGENT = "false"` to fall back to the direct Messages API path (structured
+outputs). Both paths authenticate with the `ANTHROPIC_API_KEY` Worker secret.
 
 ### Trade-offs vs. the current Messages-API path
 

@@ -88,9 +88,10 @@ src/                                # ── Frontend (Vite + React) ──
 worker/                             # ── Backend (zero-dep Cloudflare Worker) ──
   src/
     index.js                        # fetch handler + dispatch
-    lib/      http.js · router.js · validate.js · prompts.js · anthropic.js · db.js · ids.js
+    lib/      http.js · router.js · validate.js · prompts.js · anthropic.js · agents.js · db.js · ids.js
     handlers/ plan.js · getPlan.js · chat.js · booking.js
-  test/       router · validate · prompts · anthropic  (node --test)
+  test/       router · validate · prompts · anthropic · agents  (node --test)
+agents/                             # Managed Agent definition (visions-advisor.agent.yaml) + apply guide
 docs/prototype/sd-biz-ai-advisor.jsx   # original Claude.ai artifact (archival)
 ```
 
@@ -123,7 +124,8 @@ The frontend's `src/lib/api.js` is the client for this contract; in mock mode it
 |----------|--------|-----------|
 | API model | `claude-sonnet-4-6` (env `ANTHROPIC_MODEL`) | Fast/cheap for an interactive consumer flow, strong at structured JSON. Project's documented choice; configurable. |
 | Plan format | Structured outputs (`output_config.format` + JSON schema) | Guarantees parseable, well-shaped plans — fixes the prototype's strip-fences-and-hope parsing. |
-| Backend | Zero-dependency Worker, raw `fetch` to `/v1/messages` | Troy's "zero-dependency, no framework" standard; no SDK to bundle. |
+| Backend | Zero-dependency Worker, raw `fetch` | Troy's "zero-dependency, no framework" standard; no SDK to bundle. |
+| Generation path | Managed Agent (sessions) or Messages API, via `USE_MANAGED_AGENT` | Drives `agent_011CZtoh5iVJGPjFmdXkSDzo` in `env_015fkJc7jYAiMT6vN1DMPMBt` per request; both paths use the `ANTHROPIC_API_KEY` secret. Agent path is prompt-enforced JSON + heavier; Messages path keeps schema-guaranteed structured outputs. See `agents/`. |
 | Persistence | Cloudflare D1 (`plans`, `bookings`; `tasks`/`providers` reserved) | Serverless SQL; enables share/load + lead capture + analytics. |
 | Routing | react-router-dom (`/`, `/plan/:id`) | Shareable plan URLs + a load flow. |
 | Key handling | Worker secret (`ANTHROPIC_API_KEY`) | Never in the client bundle. |
@@ -143,6 +145,9 @@ The frontend's `src/lib/api.js` is the client for this contract; in mock mode it
 - [x] Component architecture, Tailwind, config-driven location.
 
 ### Phase 1 — remaining
+- [ ] Apply the agent definition to the live agent: `ant beta:agents update --agent-id
+  agent_011CZtoh5iVJGPjFmdXkSDzo --version <V> < agents/visions-advisor.agent.yaml` (the Claude
+  Code environment has no Anthropic credentials, so this runs where you do).
 - [ ] `wrangler secret put ANTHROPIC_API_KEY` + `npm run deploy` to go live.
 - [ ] Abuse protection on the public API (Turnstile and/or rate limiting) before launch — the
   current CORS is permissive and does not gate credit-spending endpoints.

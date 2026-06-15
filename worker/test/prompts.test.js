@@ -1,6 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildPlanRequest, buildChatRequest, PLAN_SCHEMA } from "../src/lib/prompts.js";
+import {
+  buildPlanRequest,
+  buildChatRequest,
+  buildPlanMessage,
+  buildChatMessage,
+  PLAN_SCHEMA,
+} from "../src/lib/prompts.js";
 
 const profile = {
   businessType: "Surf shop",
@@ -51,6 +57,31 @@ test("buildChatRequest filters history and appends the new user turn", () => {
   ]);
   assert.match(req.system, /Surf shop/);
   assert.match(req.system, /Here's your plan/);
+});
+
+test("buildPlanMessage leads with the PLAN_REQUEST marker and includes the profile", () => {
+  const msg = buildPlanMessage(profile);
+  assert.ok(msg.startsWith("[PLAN_REQUEST]\n"));
+  assert.match(msg, /Surf shop/);
+  assert.match(msg, /Getting more customers; Social media/);
+  assert.match(msg, /Pacific Beach/);
+});
+
+test("buildChatMessage leads with the FOLLOWUP_REQUEST marker and carries context", () => {
+  const msg = buildChatMessage({
+    profile,
+    headline: "Here's your plan",
+    history: [
+      { role: "user", content: "hi" },
+      { role: "assistant", content: "hello" },
+    ],
+    message: "What next?",
+  });
+  assert.ok(msg.startsWith("[FOLLOWUP_REQUEST]\n"));
+  assert.match(msg, /Plan headline: Here's your plan/);
+  assert.match(msg, /Owner: hi/);
+  assert.match(msg, /Advisor: hello/);
+  assert.match(msg, /Question: What next\?/);
 });
 
 test("PLAN_SCHEMA marks objects additionalProperties:false for strict structured output", () => {
