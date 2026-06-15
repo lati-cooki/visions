@@ -2,9 +2,9 @@
 // ApiError type so handlers can throw with a status and have it mapped to a response.
 
 // Permissive CORS. In production the Worker serves the frontend on the same origin, so
-// this mainly eases split-origin local testing. NOTE: it does not gate abuse of the
-// plan-generation endpoint (which spends API credits) — add Turnstile / rate limiting
-// before a public launch.
+// this mainly eases split-origin local testing. Abuse of the plan-generation endpoint is
+// gated elsewhere: Turnstile on /api/verify/start, an email-verification token + daily
+// caps on /api/plan, and per-IP rate limiting (see index.js).
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",

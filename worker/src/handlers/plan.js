@@ -3,20 +3,47 @@ import { validateProfile, normalizeProfile } from "../lib/validate.js";
 import { buildPlanRequest, buildPlanMessage } from "../lib/prompts.js";
 import { callMessages, extractText, parseJsonText } from "../lib/anthropic.js";
 import { runAgent } from "../lib/agents.js";
-import { verifyTurnstile } from "../lib/turnstile.js";
-import { insertPlan } from "../lib/db.js";
+import { verifyVerifyToken } from "../lib/verifyToken.js";
+import {
+  insertPlan,
+  countPlansForEmailSince,
+  countPlansSince,
+  startOfUtcDayIso,
+} from "../lib/db.js";
+import { sendPlanEmail } from "../lib/email.js";
 import { newId } from "../lib/ids.js";
 
-// POST /api/plan — validate the profile, generate a plan, persist it, return { id, plan }.
-// Backend path is selected by USE_MANAGED_AGENT: drive the Managed Agent, or call the
-// Messages API directly (with structured outputs). Either way the result is plan JSON.
-export async function planHandler(request, env) {
+// POST /api/plan — requires a verification token (obtained via /api/verify/check after
+// Turnstile), enforces the per-email + global daily caps, generates + persists the plan,
+// and emails it to the verified address.
+export async function planHandler(request, env, ctx) {
   const body = await readJson(request);
   const invalid = validateProfile(body);
   if (invalid) return error(invalid, 400);
 
-  // Gate the credit-spending call behind Turnstile before doing any work.
-  await verifyTurnstile(env, body?.turnstileToken, request.headers.get("CF-Connecting-IP"));
+  // Email-verification gate (replaces Turnstile here; Turnstile now guards verify/start).
+  const { valid, email } = await verifyVerifyToken(
+    env.VERIFY_TOKEN_SECRET,
+    body?.verifyToken,
+    Date.now()
+  );
+  if (!valid) {
+    throw new ApiError("Email verification required. Please verify your email and try again.", 401);
+  }
+
+  // Daily caps — the hard ceiling on token spend.
+  const dayStart = startOfUtcDayIso(Date.now());
+  const perEmailCap = Number(env.PER_EMAIL_DAILY_CAP || 3);
+  const globalCap = Number(env.GLOBAL_DAILY_PLAN_CAP || 200);
+  if ((await countPlansForEmailSince(env, email, dayStart)) >= perEmailCap) {
+    throw new ApiError(
+      `You've reached today's limit of ${perEmailCap} plans for this email. Try again tomorrow.`,
+      429
+    );
+  }
+  if ((await countPlansSince(env, dayStart)) >= globalCap) {
+    throw new ApiError("We've hit today's capacity. Please check back tomorrow.", 429);
+  }
 
   const profile = normalizeProfile(body);
 
@@ -38,6 +65,13 @@ export async function planHandler(request, env) {
   }
 
   const id = newId();
-  await insertPlan(env, { id, profile, recommendations: plan });
+  await insertPlan(env, { id, profile, recommendations: plan, email });
+
+  // Email the plan to the verified address; a send failure must never fail the response.
+  const deliver = sendPlanEmail(env, email, plan, id).catch((e) =>
+    console.error("Plan email failed:", e)
+  );
+  if (ctx?.waitUntil) ctx.waitUntil(deliver);
+
   return json({ id, plan });
 }

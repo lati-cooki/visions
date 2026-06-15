@@ -5,6 +5,8 @@ import {
   normalizeProfile,
   validateChat,
   validateBooking,
+  validateVerifyStart,
+  validateVerifyCheck,
 } from "../src/lib/validate.js";
 
 test("validateProfile accepts a well-formed profile", () => {
@@ -57,4 +59,19 @@ test("validateBooking requires name and a valid email", () => {
   assert.equal(validateBooking({ name: "Sam", email: "sam@biz.com" }), null);
   assert.match(validateBooking({ email: "sam@biz.com" }), /Name is required/);
   assert.match(validateBooking({ name: "Sam", email: "not-an-email" }), /valid email/);
+});
+
+test("validateVerifyStart requires a valid email", () => {
+  assert.equal(validateVerifyStart({ email: "owner@biz.com" }), null);
+  assert.match(validateVerifyStart(null), /Missing request body/);
+  assert.match(validateVerifyStart({ email: "nope" }), /valid email/);
+  assert.match(validateVerifyStart({ email: "a@b.co".padEnd(260, "x") }), /too long/);
+});
+
+test("validateVerifyCheck requires email + 6-digit code", () => {
+  assert.equal(validateVerifyCheck({ email: "owner@biz.com", code: "123456" }), null);
+  assert.equal(validateVerifyCheck({ email: "owner@biz.com", code: " 123456 " }), null);
+  assert.match(validateVerifyCheck({ email: "owner@biz.com", code: "12345" }), /6-digit/);
+  assert.match(validateVerifyCheck({ email: "owner@biz.com", code: "abcdef" }), /6-digit/);
+  assert.match(validateVerifyCheck({ email: "nope", code: "123456" }), /valid email/);
 });

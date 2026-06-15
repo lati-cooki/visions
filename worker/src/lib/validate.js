@@ -56,3 +56,20 @@ export function validateBooking(body) {
     return "Message is too long.";
   return null;
 }
+
+export function validateVerifyStart(body) {
+  if (!body || typeof body !== "object") return "Missing request body.";
+  if (typeof body.email !== "string" || !EMAIL_RE.test(body.email))
+    return "A valid email is required.";
+  if (body.email.length > 254) return "Email is too long.";
+  return null;
+}
+
+export function validateVerifyCheck(body) {
+  if (!body || typeof body !== "object") return "Missing request body.";
+  if (typeof body.email !== "string" || !EMAIL_RE.test(body.email))
+    return "A valid email is required.";
+  if (typeof body.code !== "string" || !/^\d{6}$/.test(body.code.trim()))
+    return "A 6-digit code is required.";
+  return null;
+}

@@ -6,8 +6,10 @@ export const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
 
 // Renders a Cloudflare Turnstile widget and reports the token via onVerify(token).
 // Calls onVerify("") when the token expires or errors so the caller can re-gate submit.
-// Renders nothing when no site key is configured.
-export function Turnstile({ onVerify }) {
+// Renders nothing when no site key is configured. Bumping `resetSignal` re-challenges the
+// widget for a fresh (single-use) token — needed when the same screen sends more than once
+// (e.g. "Resend code"), since a consumed token can't be reused server-side.
+export function Turnstile({ onVerify, resetSignal = 0 }) {
   const containerRef = useRef(null);
   const widgetIdRef = useRef(null);
 
@@ -48,6 +50,15 @@ export function Turnstile({ onVerify }) {
       }
     };
   }, [onVerify]);
+
+  // Re-run the challenge for a fresh token whenever resetSignal changes (skip initial mount,
+  // which the render effect above already handles).
+  useEffect(() => {
+    if (!resetSignal) return;
+    if (widgetIdRef.current !== null && window.turnstile) {
+      window.turnstile.reset(widgetIdRef.current);
+    }
+  }, [resetSignal]);
 
   if (!TURNSTILE_SITE_KEY) return null;
   return <div ref={containerRef} className="mt-6" />;

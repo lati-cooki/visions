@@ -23,14 +23,33 @@ async function postJson(path, payload) {
   return res.json();
 }
 
-// Generate + persist a plan. Returns { id, plan } — the id powers shareable /plan/:id links.
-// turnstileToken gates the credit-spending endpoint server-side (ignored in mock mode).
-export async function generatePlan(profile, turnstileToken) {
+// Step 1 of the gate: request a 6-digit code (Turnstile-gated server-side). In mock mode
+// it returns a fake devCode so `npm run dev` needs no backend/email.
+export async function startVerification(email, turnstileToken) {
+  if (USE_MOCK) {
+    await delay(400);
+    return { ok: true, devCode: "000000" };
+  }
+  return postJson("/api/verify/start", { email, turnstileToken });
+}
+
+// Step 2: exchange email + code for a short-lived verification token. Mock accepts anything.
+export async function checkVerification(email, code) {
+  if (USE_MOCK) {
+    await delay(400);
+    return { token: "mock-verify-token" };
+  }
+  return postJson("/api/verify/check", { email, code });
+}
+
+// Generate + persist a plan. Returns { id, plan }. The verifyToken proves email verification
+// (replaces the old Turnstile token here); ignored in mock mode.
+export async function generatePlan(profile, verifyToken) {
   if (USE_MOCK) {
     await delay(900);
     return { id: mockId(), plan: mockPlan(profile) };
   }
-  return postJson("/api/plan", { ...profile, turnstileToken });
+  return postJson("/api/plan", { ...profile, verifyToken });
 }
 
 // Load a saved plan. Returns { id, profile, plan, createdAt }.
