@@ -15,7 +15,6 @@ export function DetailsStep({
   onBack,
   onSubmit,
 }) {
-  const canSubmit = canAdvance;
   return (
     <div className="[animation:vfade_.4s_ease_both]">
       <ProgressDots step={3} />
@@ -66,8 +65,8 @@ export function DetailsStep({
         <Button variant="outline" onClick={onBack}>
           ← Back
         </Button>
-        <Button disabled={!canSubmit} onClick={onSubmit}>
-          See my plan →
+        <Button disabled={!canAdvance} onClick={onSubmit}>
+          Continue →
         </Button>
       </div>
     </div>

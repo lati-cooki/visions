@@ -9,7 +9,7 @@ const TABS = [
   { id: "experts", label: "Experts" },
 ];
 
-// Results surface: loading/error states + tabbed plan/tasks/experts views. Data + handlers
+// Results surface: loading/error states + tabbed plan/experts views. Data + handlers
 // are passed in; "Start over" lives in the shared header (onRestart).
 export function ResultsView({
   loading,

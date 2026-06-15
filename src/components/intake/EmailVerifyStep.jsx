@@ -14,6 +14,7 @@ export function EmailVerifyStep({ onBack, onVerified }) {
   const [code, setCode] = useState("");
   const [sent, setSent] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [resetNonce, setResetNonce] = useState(0); // bumped to re-challenge Turnstile per send
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [devCode, setDevCode] = useState(null);
@@ -35,6 +36,7 @@ export function EmailVerifyStep({ onBack, onVerified }) {
     } finally {
       setBusy(false);
       setTurnstileToken(""); // single-use
+      setResetNonce((n) => n + 1); // re-challenge Turnstile so a resend gets a fresh token
     }
   };
 
@@ -54,7 +56,7 @@ export function EmailVerifyStep({ onBack, onVerified }) {
 
   return (
     <div className="[animation:vfade_.4s_ease_both]">
-      <ProgressDots step={3} />
+      <ProgressDots step={4} />
       <h2 className="m-0 mb-[7px] text-[clamp(24px,4vw,30px)] font-extrabold tracking-[-0.02em]">
         Where should we send your plan?
       </h2>
@@ -75,7 +77,8 @@ export function EmailVerifyStep({ onBack, onVerified }) {
         className="w-full rounded-[12px] border border-brand-border px-[15px] py-[13px] text-[15px] outline-none transition focus:border-brand-ocean focus:shadow-[0_0_0_3px_rgba(26,127,181,0.13)] disabled:bg-[#f6f4f0]"
       />
 
-      {!sent && <Turnstile onVerify={setTurnstileToken} />}
+      {/* Kept mounted across send/resend so each send re-challenges for a fresh token. */}
+      <Turnstile onVerify={setTurnstileToken} resetSignal={resetNonce} />
 
       {sent && (
         <div className="mt-[18px]">
