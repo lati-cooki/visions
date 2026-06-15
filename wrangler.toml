@@ -32,3 +32,22 @@ ANTHROPIC_MODEL = "claude-sonnet-4-6"
 USE_MANAGED_AGENT = "false"
 AGENT_ID = "agent_011CZtoh5iVJGPjFmdXkSDzo"
 AGENT_ENV_ID = "env_015fkJc7jYAiMT6vN1DMPMBt"
+
+# Per-IP rate limiting (Workers Rate Limiting, GA) as a backstop behind Turnstile on the
+# credit-spending endpoints. period must be 10 or 60 (seconds). Enforced on Cloudflare's
+# network only (not in local `wrangler dev`).
+[[ratelimits]]
+name = "PLAN_RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
+[[ratelimits]]
+name = "CHAT_RATE_LIMITER"
+namespace_id = "1002"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 60

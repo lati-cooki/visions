@@ -19,6 +19,17 @@ export default {
     const route = resolveRoute(request.method, url.pathname);
     if (!route) return error("Not found.", 404);
 
+    // Per-IP rate limiting on the credit-spending endpoints (backstop behind Turnstile).
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    if (route.name === "plan" && env.PLAN_RATE_LIMITER) {
+      const { success } = await env.PLAN_RATE_LIMITER.limit({ key: ip });
+      if (!success) return error("Too many requests. Please slow down and try again.", 429);
+    }
+    if (route.name === "chat" && env.CHAT_RATE_LIMITER) {
+      const { success } = await env.CHAT_RATE_LIMITER.limit({ key: ip });
+      if (!success) return error("Too many requests. Please slow down and try again.", 429);
+    }
+
     try {
       switch (route.name) {
         case "health":
