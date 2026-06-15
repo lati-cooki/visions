@@ -1,17 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MAX_PAIN_POINTS } from "../data/intake.js";
-import { storage } from "../lib/storage.js";
 import { buildProfile } from "../lib/profile.js";
 import { generatePlan } from "../lib/api.js";
-import { buildPlanTasks } from "../lib/tasks.js";
 import { Landing } from "../components/Landing.jsx";
 import { PageShell } from "../components/Layout.jsx";
 import { BusinessTypeStep } from "../components/intake/BusinessTypeStep.jsx";
 import { PainPointsStep } from "../components/intake/PainPointsStep.jsx";
 import { DetailsStep } from "../components/intake/DetailsStep.jsx";
+import { EmailVerifyStep } from "../components/intake/EmailVerifyStep.jsx";
 import { ResultsView } from "../components/results/ResultsView.jsx";
-
-const TASKS_KEY = "tasks";
 
 // The "/" route: owns the intake → plan → results state machine. Rendering is delegated to
 // the step/results components; state and handlers live here.
@@ -31,26 +28,12 @@ export function AdvisorFlow() {
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null); // snapshot used by results + chat
   const [planId, setPlanId] = useState(null);
-  const [turnstileToken, setTurnstileToken] = useState(""); // single-use; reset after each attempt
+  const [verifyToken, setVerifyToken] = useState(""); // from EmailVerifyStep
 
   // Results
   const [activeTab, setActiveTab] = useState("plan");
-  const [tasks, setTasks] = useState([]);
   const [planSaved, setPlanSaved] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const res = await storage.get(TASKS_KEY);
-      if (res?.value) {
-        try {
-          setTasks(JSON.parse(res.value));
-        } catch {
-          /* ignore corrupt cache */
-        }
-      }
-    })();
-  }, []);
 
   const togglePainPoint = (id) =>
     setPainPoints((prev) => {
@@ -65,7 +48,7 @@ export function AdvisorFlow() {
 
   const shareUrl = planId ? `${window.location.origin}/plan/${planId}` : null;
 
-  const getRecommendations = async () => {
+  const getRecommendations = async (token) => {
     const snapshot = buildProfile({
       businessType,
       otherType,
@@ -79,11 +62,11 @@ export function AdvisorFlow() {
     setError(null);
     setPlanId(null);
     setPlanSaved(false);
-    setStep(4);
+    setStep(5);
     setActiveTab("plan");
 
     try {
-      const { id, plan } = await generatePlan(snapshot, turnstileToken);
+      const { id, plan } = await generatePlan(snapshot, token || verifyToken);
       if (!plan?.headline || !plan?.quick_wins) throw new Error("Incomplete response");
       setRecommendations(plan);
       setPlanId(id);
@@ -92,8 +75,6 @@ export function AdvisorFlow() {
       setError("Something went wrong generating your plan. Please try again.");
     } finally {
       setLoading(false);
-      // The Turnstile token is single-use; clear it so a retry re-verifies.
-      setTurnstileToken("");
     }
   };
 
@@ -108,13 +89,6 @@ export function AdvisorFlow() {
     setPlanSaved(true);
   };
 
-  const addTasksFromPlan = () => {
-    const updated = [...tasks, ...buildPlanTasks(recommendations)];
-    setTasks(updated);
-    storage.set(TASKS_KEY, JSON.stringify(updated));
-    setActiveTab("tasks");
-  };
-
   const restart = () => {
     setStep(0);
     setBusinessType(null);
@@ -127,7 +101,7 @@ export function AdvisorFlow() {
     setError(null);
     setProfile(null);
     setPlanId(null);
-    setTurnstileToken("");
+    setVerifyToken("");
     setActiveTab("plan");
     setPlanSaved(false);
     setShowBooking(false);
@@ -176,9 +150,21 @@ export function AdvisorFlow() {
           setExtraContext={setExtraContext}
           canAdvance={canAdvanceStep3}
           onBack={() => setStep(2)}
-          onSubmit={getRecommendations}
-          turnstileToken={turnstileToken}
-          setTurnstileToken={setTurnstileToken}
+          onSubmit={() => setStep(4)}
+        />
+      </PageShell>
+    );
+  }
+
+  if (step === 4) {
+    return (
+      <PageShell width="narrow" onHome={restart}>
+        <EmailVerifyStep
+          onBack={() => setStep(3)}
+          onVerified={(token) => {
+            setVerifyToken(token);
+            getRecommendations(token);
+          }}
         />
       </PageShell>
     );
@@ -188,16 +174,13 @@ export function AdvisorFlow() {
     <ResultsView
       loading={loading}
       error={error}
-      onRetry={() => setStep(3)}
+      onRetry={() => setStep(4)}
       recommendations={recommendations}
       profile={profile}
       businessLabel={profile?.businessType || ""}
       onRestart={restart}
       activeTab={activeTab}
       setActiveTab={setActiveTab}
-      tasks={tasks}
-      setTasks={setTasks}
-      onAddTasks={addTasksFromPlan}
       onSavePlan={savePlan}
       planSaved={planSaved}
       shareUrl={shareUrl}
