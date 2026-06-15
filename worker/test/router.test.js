@@ -26,3 +26,9 @@ test("resolveRoute returns null for unknown or mismatched routes", () => {
   assert.equal(resolveRoute("DELETE", "/api/plan"), null);
   assert.equal(resolveRoute("GET", "/api/unknown"), null);
 });
+
+test("routes the verify endpoints", () => {
+  assert.deepEqual(resolveRoute("POST", "/api/verify/start"), { name: "verifyStart" });
+  assert.deepEqual(resolveRoute("POST", "/api/verify/check"), { name: "verifyCheck" });
+  assert.equal(resolveRoute("GET", "/api/verify/start"), null);
+});

@@ -9,5 +9,7 @@ export function resolveRoute(method, pathname) {
   }
   if (method === "POST" && pathname === "/api/chat") return { name: "chat" };
   if (method === "POST" && pathname === "/api/booking") return { name: "booking" };
+  if (method === "POST" && pathname === "/api/verify/start") return { name: "verifyStart" };
+  if (method === "POST" && pathname === "/api/verify/check") return { name: "verifyCheck" };
   return null;
 }

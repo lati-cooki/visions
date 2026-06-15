@@ -10,6 +10,8 @@ import { planHandler } from "./handlers/plan.js";
 import { getPlanHandler } from "./handlers/getPlan.js";
 import { chatHandler } from "./handlers/chat.js";
 import { bookingHandler } from "./handlers/booking.js";
+import { verifyStartHandler } from "./handlers/verifyStart.js";
+import { verifyCheckHandler } from "./handlers/verifyCheck.js";
 
 export default {
   async fetch(request, env, ctx) {
@@ -29,13 +31,25 @@ export default {
       const { success } = await env.CHAT_RATE_LIMITER.limit({ key: ip });
       if (!success) return error("Too many requests. Please slow down and try again.", 429);
     }
+    if (route.name === "verifyStart" && env.VERIFY_START_RATE_LIMITER) {
+      const { success } = await env.VERIFY_START_RATE_LIMITER.limit({ key: ip });
+      if (!success) return error("Too many requests. Please slow down and try again.", 429);
+    }
+    if (route.name === "verifyCheck" && env.VERIFY_CHECK_RATE_LIMITER) {
+      const { success } = await env.VERIFY_CHECK_RATE_LIMITER.limit({ key: ip });
+      if (!success) return error("Too many requests. Please slow down and try again.", 429);
+    }
 
     try {
       switch (route.name) {
         case "health":
           return json({ ok: true });
         case "plan":
-          return await planHandler(request, env);
+          return await planHandler(request, env, ctx);
+        case "verifyStart":
+          return await verifyStartHandler(request, env);
+        case "verifyCheck":
+          return await verifyCheckHandler(request, env);
         case "getPlan":
           return await getPlanHandler(route.id, env);
         case "chat":
