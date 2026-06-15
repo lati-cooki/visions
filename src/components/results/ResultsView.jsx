@@ -1,13 +1,11 @@
 import { PageShell } from "../Layout.jsx";
 import { Button } from "../ui/Button.jsx";
 import { PlanView } from "./PlanView.jsx";
-import { TaskBoard } from "./TaskBoard.jsx";
 import { ProviderDirectory } from "./ProviderDirectory.jsx";
 import { BookingModal } from "../BookingModal.jsx";
 
 const TABS = [
   { id: "plan", label: "AI Plan" },
-  { id: "tasks", label: "Tasks" },
   { id: "experts", label: "Experts" },
 ];
 
@@ -23,9 +21,6 @@ export function ResultsView({
   onRestart,
   activeTab,
   setActiveTab,
-  tasks,
-  setTasks,
-  onAddTasks,
   onSavePlan,
   planSaved,
   shareUrl,
@@ -83,15 +78,12 @@ export function ResultsView({
           recommendations={recommendations}
           profile={profile}
           businessLabel={businessLabel}
-          onAddTasks={onAddTasks}
           onSavePlan={onSavePlan}
           onBook={() => setShowBooking(true)}
           planSaved={planSaved}
           shareUrl={shareUrl}
         />
       )}
-
-      {activeTab === "tasks" && <TaskBoard tasks={tasks} setTasks={setTasks} />}
 
       {activeTab === "experts" && <ProviderDirectory onContact={() => setShowBooking(true)} />}
 

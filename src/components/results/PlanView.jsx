@@ -7,7 +7,6 @@ export function PlanView({
   recommendations,
   profile,
   businessLabel,
-  onAddTasks,
   onSavePlan,
   onBook,
   planSaved,
@@ -48,12 +47,6 @@ export function PlanView({
 
       {/* Action bar */}
       <div className="my-[22px] flex flex-wrap gap-2.5">
-        <button
-          onClick={onAddTasks}
-          className="inline-flex items-center gap-2 rounded-[12px] bg-brand-ocean px-5 py-[13px] text-[14px] font-bold text-white transition hover:bg-brand-navy"
-        >
-          ＋ Add to Tasks
-        </button>
         <button
           onClick={onSavePlan}
           disabled={!shareUrl}
@@ -161,12 +154,6 @@ export function PlanView({
               </span>
               <span className="pt-0.5 text-[14px] font-semibold leading-[1.45]">{recommendations.next_step}</span>
             </div>
-            <button
-              onClick={onAddTasks}
-              className="mt-1 self-start rounded-[11px] border border-brand-border bg-white px-[18px] py-[11px] text-[14px] font-bold text-brand-slate transition hover:border-brand-ocean hover:text-brand-navy"
-            >
-              ＋ Add this week to tasks
-            </button>
           </div>
         )}
       </div>
