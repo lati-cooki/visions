@@ -5,3 +5,9 @@ ANTHROPIC_API_KEY=sk-ant-your-key-here
 
 # Turnstile secret for local full-stack verification. Cloudflare's always-pass test key:
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+
+# Email-verification gate (local dev).
+VERIFY_TOKEN_SECRET=dev-verify-token-secret-change-me
+VERIFY_CODE_PEPPER=dev-code-pepper-change-me
+# Echo the 6-digit code in the verify/start response instead of emailing it (DEV ONLY).
+VERIFY_DEV_ECHO=true

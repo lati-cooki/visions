@@ -46,6 +46,14 @@ USE_MANAGED_AGENT = "false"
 AGENT_ID = "agent_011CZtoh5iVJGPjFmdXkSDzo"
 AGENT_ENV_ID = "env_015fkJc7jYAiMT6vN1DMPMBt"
 
+# Email-verification gate + cost caps.
+VERIFY_EMAIL_FROM = "plans@l8ti.com"   # FROM for code + plan emails (must be on the onboarded domain)
+SITE_URL = "https://l8ti.com"          # base for /plan/:id links in the plan email
+GLOBAL_DAILY_PLAN_CAP = "200"          # hard ceiling (~$10/day at ~$0.05/plan)
+PER_EMAIL_DAILY_CAP = "3"
+VERIFY_CODE_TTL_MIN = "10"
+VERIFY_TOKEN_TTL_MIN = "30"
+
 # Per-IP rate limiting (Workers Rate Limiting, GA) as a backstop behind Turnstile on the
 # credit-spending endpoints. period must be 10 or 60 (seconds). Enforced on Cloudflare's
 # network only (not in local `wrangler dev`).
@@ -68,4 +76,20 @@ namespace_id = "1002"
 
   [ratelimits.simple]
   limit = 30
+  period = 60
+
+[[ratelimits]]
+name = "VERIFY_START_RATE_LIMITER"
+namespace_id = "1003"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
+[[ratelimits]]
+name = "VERIFY_CHECK_RATE_LIMITER"
+namespace_id = "1004"
+
+  [ratelimits.simple]
+  limit = 10
   period = 60
