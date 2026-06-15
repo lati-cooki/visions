@@ -2,6 +2,13 @@ name = "visions"
 main = "worker/src/index.js"
 compatibility_date = "2026-06-12"
 
+# Production hostnames. Visions serves the l8ti.com apex + www as Custom Domains. The
+# separate l8ticom Worker (Sobriety Pursuit) keeps sp.l8ti.com via its own route.
+routes = [
+  { pattern = "l8ti.com", custom_domain = true },
+  { pattern = "www.l8ti.com", custom_domain = true },
+]
+
 # Static frontend (Vite build output). The Worker runs first only for /api/* routes
 # (run_worker_first); everything else is served from ./dist with SPA fallback so client
 # routes like /plan/:id resolve to index.html. Requires Wrangler >= 4.20.0.

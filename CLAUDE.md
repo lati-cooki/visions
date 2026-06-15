@@ -26,9 +26,12 @@ backed by **D1**. The Anthropic call is server-side (key held as a Worker secret
 to D1 and are shareable at `/plan/:id`; bookings persist too. The frontend keeps a mock mode so
 `npm run dev` is fully demoable without a backend or key.
 
-**Not yet done:** deploying the Worker (needs the Anthropic key + `wrangler deploy`) and
-pre-launch abuse protection (Turnstile / rate limiting) on the public API. Everything else for
-Phase 1 is built, tested, and the D1 schema is applied to the live database.
+**Live:** deployed to Cloudflare and serving the **l8ti.com** apex (+ `www`) as Custom Domains
+on the `visions` Worker. Generation uses the Messages API path (`USE_MANAGED_AGENT="false"`).
+Abuse protection is in place: Turnstile on `/api/plan` + per-IP rate limiting. Booking
+notifications email the owner (pending the l8ti.com Email Sending domain onboarding). Sobriety
+Pursuit was relocated to **sp.l8ti.com** (separate `l8ticom` Worker). See
+`docs/superpowers/specs|plans/2026-06-15-l8ti-cutover*`.
 
 ### Run it
 
@@ -144,14 +147,18 @@ The frontend's `src/lib/api.js` is the client for this contract; in mock mode it
 - [x] `node --test` coverage for the backend logic (router, validation, prompts, parsing).
 - [x] Component architecture, Tailwind, config-driven location.
 
-### Phase 1 — remaining
-- [ ] Apply the agent definition to the live agent: `ant beta:agents update --agent-id
-  agent_011CZtoh5iVJGPjFmdXkSDzo --version <V> < agents/visions-advisor.agent.yaml` (the Claude
-  Code environment has no Anthropic credentials, so this runs where you do).
-- [ ] `wrangler secret put ANTHROPIC_API_KEY` + `npm run deploy` to go live.
-- [ ] Abuse protection on the public API (Turnstile and/or rate limiting) before launch — the
-  current CORS is permissive and does not gate credit-spending endpoints.
-- [ ] Wire booking to an email/Calendly notification (rows are captured in D1 today).
+### Phase 1 — done (launch)
+- [x] `wrangler secret put ANTHROPIC_API_KEY` + `npm run deploy`; live on l8ti.com.
+- [x] Abuse protection: Turnstile verification on `/api/plan` (`worker/src/lib/turnstile.js`)
+  + per-IP rate limiting on `/api/plan` (5/60s) and `/api/chat` (30/60s) via `[[ratelimits]]`.
+- [x] Booking → owner email via Cloudflare Email Sending binding (`worker/src/lib/email.js`,
+  non-fatal `ctx.waitUntil`). **Pending:** onboard l8ti.com to Email Sending in the dashboard
+  (Compute → Email Service → Email Sending → Onboard Domain) so `bookings@l8ti.com` can deliver.
+- N/A Managed Agent definition — superseded by the Messages API path (`USE_MANAGED_AGENT="false"`).
+
+### Phase 1 — follow-ups
+- [ ] Onboard l8ti.com to Email Sending (above) to activate booking notifications.
+- [ ] Rotate the Turnstile secret key (it was shared during setup).
 
 ### Phase 2 (growth)
 - [ ] Email capture + drip; DB-driven provider directory with submission/approval (tables
