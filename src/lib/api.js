@@ -24,12 +24,13 @@ async function postJson(path, payload) {
 }
 
 // Generate + persist a plan. Returns { id, plan } — the id powers shareable /plan/:id links.
-export async function generatePlan(profile) {
+// turnstileToken gates the credit-spending endpoint server-side (ignored in mock mode).
+export async function generatePlan(profile, turnstileToken) {
   if (USE_MOCK) {
     await delay(900);
     return { id: mockId(), plan: mockPlan(profile) };
   }
-  return postJson("/api/plan", profile);
+  return postJson("/api/plan", { ...profile, turnstileToken });
 }
 
 // Load a saved plan. Returns { id, profile, plan, createdAt }.

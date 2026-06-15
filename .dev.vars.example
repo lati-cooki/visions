@@ -2,3 +2,6 @@
 # In production these are set with `wrangler secret put <NAME>`, never committed.
 
 ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# Turnstile secret for local full-stack verification. Cloudflare's always-pass test key:
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA

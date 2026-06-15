@@ -31,6 +31,7 @@ export function AdvisorFlow() {
   const [error, setError] = useState(null);
   const [profile, setProfile] = useState(null); // snapshot used by results + chat
   const [planId, setPlanId] = useState(null);
+  const [turnstileToken, setTurnstileToken] = useState(""); // single-use; reset after each attempt
 
   // Results
   const [activeTab, setActiveTab] = useState("plan");
@@ -82,7 +83,7 @@ export function AdvisorFlow() {
     setActiveTab("plan");
 
     try {
-      const { id, plan } = await generatePlan(snapshot);
+      const { id, plan } = await generatePlan(snapshot, turnstileToken);
       if (!plan?.headline || !plan?.quick_wins) throw new Error("Incomplete response");
       setRecommendations(plan);
       setPlanId(id);
@@ -91,6 +92,8 @@ export function AdvisorFlow() {
       setError("Something went wrong generating your plan. Please try again.");
     } finally {
       setLoading(false);
+      // The Turnstile token is single-use; clear it so a retry re-verifies.
+      setTurnstileToken("");
     }
   };
 
@@ -124,6 +127,7 @@ export function AdvisorFlow() {
     setError(null);
     setProfile(null);
     setPlanId(null);
+    setTurnstileToken("");
     setActiveTab("plan");
     setPlanSaved(false);
     setShowBooking(false);
@@ -173,6 +177,8 @@ export function AdvisorFlow() {
           canAdvance={canAdvanceStep3}
           onBack={() => setStep(2)}
           onSubmit={getRecommendations}
+          turnstileToken={turnstileToken}
+          setTurnstileToken={setTurnstileToken}
         />
       </PageShell>
     );
@@ -182,7 +188,7 @@ export function AdvisorFlow() {
     <ResultsView
       loading={loading}
       error={error}
-      onRetry={getRecommendations}
+      onRetry={() => setStep(3)}
       recommendations={recommendations}
       profile={profile}
       businessLabel={profile?.businessType || ""}
