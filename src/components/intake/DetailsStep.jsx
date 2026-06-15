@@ -2,7 +2,6 @@ import { TEAM_SIZES, BUDGETS } from "../../data/intake.js";
 import { ProgressDots } from "./ProgressDots.jsx";
 import { OptionButton } from "../ui/OptionButton.jsx";
 import { Button } from "../ui/Button.jsx";
-import { Turnstile, TURNSTILE_SITE_KEY } from "./Turnstile.jsx";
 
 // Step 3: team size + budget chips + optional notes. Submits to plan generation.
 export function DetailsStep({
@@ -15,12 +14,8 @@ export function DetailsStep({
   canAdvance,
   onBack,
   onSubmit,
-  turnstileToken,
-  setTurnstileToken,
 }) {
-  // Require a Turnstile token before submit only when the widget is configured.
-  const needsToken = Boolean(TURNSTILE_SITE_KEY);
-  const canSubmit = canAdvance && (!needsToken || Boolean(turnstileToken));
+  const canSubmit = canAdvance;
   return (
     <div className="[animation:vfade_.4s_ease_both]">
       <ProgressDots step={3} />
@@ -66,8 +61,6 @@ export function DetailsStep({
           className="w-full resize-y rounded-[12px] border border-brand-border px-[15px] py-[13px] text-[15px] leading-relaxed outline-none transition focus:border-brand-ocean focus:shadow-[0_0_0_3px_rgba(26,127,181,0.13)]"
         />
       </div>
-
-      <Turnstile onVerify={setTurnstileToken} />
 
       <div className="mt-[34px] flex justify-between gap-3">
         <Button variant="outline" onClick={onBack}>
