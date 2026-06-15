@@ -12,7 +12,9 @@
     "worker:dev": "wrangler dev",
     "deploy": "npm run build && wrangler deploy",
     "db:schema:local": "wrangler d1 execute visions --local --file=./schema.sql",
-    "db:schema:remote": "wrangler d1 execute visions --remote --file=./schema.sql"
+    "db:schema:remote": "wrangler d1 execute visions --remote --file=./schema.sql",
+    "db:migrate:local": "wrangler d1 execute visions --local --file=./migrations/2026-06-15-email-gate.sql",
+    "db:migrate:remote": "wrangler d1 execute visions --remote --file=./migrations/2026-06-15-email-gate.sql"
   },
   "dependencies": {
     "react": "^18.3.1",

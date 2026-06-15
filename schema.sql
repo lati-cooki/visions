@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS plans (
   budget          TEXT,
   extra_context   TEXT,
   recommendations TEXT NOT NULL,            -- JSON object (the generated plan)
-  created_at      TEXT NOT NULL
+  created_at      TEXT NOT NULL,
+  email           TEXT                      -- verified owner email (added 2026-06-15)
 );
 
 -- Consultation booking requests (lead capture).
@@ -31,16 +32,16 @@ CREATE TABLE IF NOT EXISTS bookings (
   FOREIGN KEY (plan_id) REFERENCES plans(id)
 );
 
--- Reserved for future authenticated task sync. Tasks are client-local (localStorage)
--- in this phase; this table is defined now so the migration is in place when sync lands.
-CREATE TABLE IF NOT EXISTS tasks (
-  id         TEXT PRIMARY KEY,
-  plan_id    TEXT,
-  title      TEXT NOT NULL,
-  status     TEXT NOT NULL DEFAULT 'todo',
-  source     TEXT NOT NULL DEFAULT 'manual',
-  created_at TEXT NOT NULL,
-  FOREIGN KEY (plan_id) REFERENCES plans(id)
+-- Email verification codes for plan generation. Raw codes are never stored — only a
+-- peppered SHA-256 hash. Rows are single-use (consumed_at) and short-lived (expires_at).
+CREATE TABLE IF NOT EXISTS email_verifications (
+  id          TEXT PRIMARY KEY,
+  email       TEXT NOT NULL,
+  code_hash   TEXT NOT NULL,
+  attempts    INTEGER NOT NULL DEFAULT 0,
+  expires_at  TEXT NOT NULL,
+  consumed_at TEXT,
+  created_at  TEXT NOT NULL
 );
 
 -- Reserved for the Phase 2 provider directory (submission + approval flow). The live
@@ -58,3 +59,5 @@ CREATE TABLE IF NOT EXISTS providers (
 
 CREATE INDEX IF NOT EXISTS idx_bookings_plan ON bookings(plan_id);
 CREATE INDEX IF NOT EXISTS idx_plans_created ON plans(created_at);
+CREATE INDEX IF NOT EXISTS idx_plans_email ON plans(email);
+CREATE INDEX IF NOT EXISTS idx_email_verifications_email ON email_verifications(email);
