@@ -54,9 +54,9 @@ PER_EMAIL_DAILY_CAP = "3"
 VERIFY_CODE_TTL_MIN = "10"
 VERIFY_TOKEN_TTL_MIN = "30"
 
-# Per-IP rate limiting (Workers Rate Limiting, GA) as a backstop behind Turnstile on the
-# credit-spending endpoints. period must be 10 or 60 (seconds). Enforced on Cloudflare's
-# network only (not in local `wrangler dev`).
+# Per-IP rate limiting (Workers Rate Limiting, GA) backing the verify + plan endpoints
+# (Turnstile gates verify/start; an email-verification token + daily caps gate /api/plan).
+# period must be 10 or 60 (seconds). Enforced on Cloudflare's network only (not in `wrangler dev`).
 # Cloudflare Email Sending binding — used to email the owner on a new booking. The FROM
 # domain (l8ti.com) must be onboarded: `wrangler email sending enable l8ti.com`.
 [[send_email]]
