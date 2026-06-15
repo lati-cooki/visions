@@ -1,26 +1,22 @@
-// Shared button. Variants cover the patterns repeated across the app; one-off buttons
-// (e.g. tab triggers, the task status checkbox) stay inline with their component.
+// Shared button matching the design's tokens. Variants cover the repeated patterns; one-off
+// buttons (plan action bar, provider cards, booking) stay inline with their component.
+
+const BASE =
+  "inline-flex items-center justify-center gap-[9px] rounded-[12px] font-[inherit] transition disabled:cursor-not-allowed focus:outline focus:outline-[3px] focus:outline-offset-2 focus:outline-brand-ocean/40";
 
 const VARIANTS = {
-  // Big primary CTA (intake "Next", "Get My AI Plan", booking submit).
+  // Big primary CTA (intake Continue, retry, booking submit).
   primary:
-    "px-9 py-3.5 text-base font-semibold tracking-wide bg-brand-ocean text-white " +
-    "disabled:bg-brand-border disabled:text-brand-slate disabled:opacity-70 disabled:cursor-default",
-  // Neutral outlined button (Start Over, Save Plan, secondary actions).
+    "bg-brand-ocean px-[26px] py-[14px] text-[16px] font-bold text-white hover:bg-brand-navy disabled:bg-[#bcd4e3] disabled:text-white",
+  // Coral accent.
+  coral: "bg-brand-coral px-[26px] py-[14px] text-[16px] font-bold text-white hover:bg-[#cf5946]",
+  // Neutral outlined (intake Back, secondary actions).
   outline:
-    "px-5 py-2.5 text-[15px] font-medium bg-white text-brand-navy border-[1.5px] border-brand-border",
-  // Coral accent (Book a Consultation).
-  coral:
-    "px-4 py-2 text-sm font-semibold bg-brand-coral text-white border-[1.5px] border-brand-coral",
-  // Text-only back button.
-  ghost: "px-4 py-2 text-[15px] font-medium bg-transparent text-brand-slate",
+    "border border-brand-border bg-white px-[22px] py-[14px] text-[15px] font-semibold text-brand-slate hover:border-brand-ocean hover:text-brand-navy focus:outline-2 focus:outline-brand-ocean",
+  // Text-only.
+  ghost: "bg-transparent px-4 py-2 text-[15px] font-medium text-brand-slate",
 };
 
 export function Button({ variant = "primary", className = "", ...props }) {
-  return (
-    <button
-      className={`inline-flex items-center justify-center rounded-[10px] font-[inherit] transition disabled:cursor-default ${VARIANTS[variant]} ${className}`}
-      {...props}
-    />
-  );
+  return <button className={`${BASE} ${VARIANTS[variant]} ${className}`} {...props} />;
 }

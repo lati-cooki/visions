@@ -1,14 +1,14 @@
-// Selectable choice button used across the intake steps and the booking time picker.
-// Active state gets an ocean ring + light-blue fill; disabled dims and blocks clicks.
+// Chip-style choice button used for team size, budget, and the booking time picker. Active
+// gets an ocean ring + light-blue fill (the design's `chipSel`).
 export function OptionButton({ active, disabled = false, className = "", children, ...props }) {
   return (
     <button
       disabled={disabled}
-      className={`rounded-[10px] px-5 py-2.5 text-left text-[15px] font-[inherit] leading-snug text-brand-navy transition ${
+      className={`inline-flex items-center justify-center gap-2 rounded-[11px] px-[18px] py-[11px] text-[14px] font-semibold font-[inherit] transition focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-brand-ocean ${
         active
-          ? "border-2 border-brand-ocean bg-brand-lightblue font-semibold"
-          : "border-[1.5px] border-brand-border bg-white font-normal"
-      } ${disabled ? "cursor-default opacity-45" : "cursor-pointer"} ${className}`}
+          ? "border-[1.5px] border-brand-ocean bg-brand-lightblue text-brand-navy"
+          : "border border-brand-border bg-white text-brand-slate"
+      } ${disabled ? "cursor-default opacity-45" : "cursor-pointer hover:border-brand-ocean"} ${className}`}
       {...props}
     >
       {children}

@@ -5,8 +5,14 @@ import { TaskBoard } from "./TaskBoard.jsx";
 import { ProviderDirectory } from "./ProviderDirectory.jsx";
 import { BookingModal } from "../BookingModal.jsx";
 
-// Step 4 / shared-plan surface: owns the loading/error states and the tabbed
-// plan/tasks/directory views. All data + handlers are passed in; this is layout + routing.
+const TABS = [
+  { id: "plan", label: "AI Plan" },
+  { id: "tasks", label: "Tasks" },
+  { id: "experts", label: "Experts" },
+];
+
+// Results surface: loading/error states + tabbed plan/tasks/experts views. Data + handlers
+// are passed in; "Start over" lives in the shared header (onRestart).
 export function ResultsView({
   loading,
   error,
@@ -15,7 +21,6 @@ export function ResultsView({
   profile,
   businessLabel,
   onRestart,
-  restartLabel = "Start Over",
   activeTab,
   setActiveTab,
   tasks,
@@ -30,7 +35,7 @@ export function ResultsView({
 }) {
   if (loading) {
     return (
-      <PageShell>
+      <PageShell width="wide" onHome={onRestart}>
         <div className="pt-24 text-center">
           <div className="mb-5 animate-pulse text-[44px]">🤖</div>
           <h2 className="mb-2 text-[22px] font-semibold">Building your AI plan...</h2>
@@ -44,7 +49,7 @@ export function ResultsView({
 
   if (error) {
     return (
-      <PageShell>
+      <PageShell width="wide" onHome={onRestart}>
         <div className="pt-20 text-center">
           <p className="mb-5 text-base text-brand-coral">{error}</p>
           <Button onClick={onRetry}>Try Again</Button>
@@ -55,35 +60,17 @@ export function ResultsView({
 
   if (!recommendations) return null;
 
-  const tabs = [
-    { id: "plan", label: "AI Plan" },
-    { id: "tasks", label: `Tasks${tasks.length ? ` (${tasks.length})` : ""}` },
-    { id: "directory", label: "SD Experts" },
-  ];
-
   return (
-    <PageShell>
-      <div className="mb-2 flex items-center justify-between">
-        <div>
-          <div className="text-xs font-bold uppercase tracking-wider text-brand-ocean">
-            Your AI Plan
-          </div>
-          <h2 className="m-0 mt-1 text-[22px] font-bold">{businessLabel}</h2>
-        </div>
-        <Button variant="outline" className="border px-3.5 py-1.5 text-[13px]" onClick={onRestart}>
-          {restartLabel}
-        </Button>
-      </div>
-
-      <div className="mb-6 mt-4 flex border-b-2 border-brand-border">
-        {tabs.map((t) => (
+    <PageShell width="wide" onHome={onRestart}>
+      <div className="mb-7 flex gap-1 overflow-x-auto border-b border-brand-border">
+        {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`-mb-0.5 border-b-[3px] px-5 py-2.5 text-sm transition ${
+            className={`-mb-px whitespace-nowrap border-b-[2.5px] px-[22px] py-[13px] text-[15px] font-semibold transition focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-brand-ocean ${
               activeTab === t.id
-                ? "border-brand-ocean font-bold text-brand-ocean"
-                : "border-transparent font-medium text-brand-slate"
+                ? "border-brand-ocean text-brand-navy"
+                : "border-transparent text-brand-slate hover:text-brand-navy"
             }`}
           >
             {t.label}
@@ -95,6 +82,7 @@ export function ResultsView({
         <PlanView
           recommendations={recommendations}
           profile={profile}
+          businessLabel={businessLabel}
           onAddTasks={onAddTasks}
           onSavePlan={onSavePlan}
           onBook={() => setShowBooking(true)}
@@ -103,35 +91,11 @@ export function ResultsView({
         />
       )}
 
-      {activeTab === "tasks" && (
-        <>
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h3 className="m-0 text-lg font-bold">Your AI Implementation Tasks</h3>
-              <p className="m-0 mt-1 text-[13px] text-brand-slate">
-                Track your progress as you adopt AI tools.
-              </p>
-            </div>
-            {recommendations.quick_wins && (
-              <button
-                onClick={onAddTasks}
-                className="rounded-lg border border-brand-ocean/30 px-3 py-1.5 text-xs text-brand-ocean"
-              >
-                + From Plan
-              </button>
-            )}
-          </div>
-          <TaskBoard tasks={tasks} setTasks={setTasks} />
-        </>
-      )}
+      {activeTab === "tasks" && <TaskBoard tasks={tasks} setTasks={setTasks} />}
 
-      {activeTab === "directory" && (
-        <ProviderDirectory onGetListed={() => setShowBooking(true)} />
-      )}
+      {activeTab === "experts" && <ProviderDirectory onContact={() => setShowBooking(true)} />}
 
-      {showBooking && (
-        <BookingModal planId={planId} onClose={() => setShowBooking(false)} />
-      )}
+      {showBooking && <BookingModal planId={planId} onClose={() => setShowBooking(false)} />}
     </PageShell>
   );
 }

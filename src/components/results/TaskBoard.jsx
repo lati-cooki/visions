@@ -1,20 +1,23 @@
 import { useState } from "react";
 import { storage } from "../../lib/storage.js";
-import { Button } from "../ui/Button.jsx";
 
+// Status metadata from the design (dot color + tinted pill background). Internal keys stay
+// todo/doing/done to match the rest of the app + persisted data.
 const STATUS = {
-  todo: { className: "bg-amber-100 text-amber-800", ring: "border-amber-800", label: "To Do" },
-  doing: { className: "bg-blue-100 text-blue-800", ring: "border-blue-800", label: "In Progress" },
-  done: { className: "bg-emerald-100 text-emerald-800", ring: "border-emerald-800", label: "Done" },
+  todo: { label: "To Do", dot: "#E26D5A", bg: "bg-[#fff0ec]", border: "border-[#E26D5A55]" },
+  doing: { label: "In Progress", dot: "#1A7FB5", bg: "bg-brand-lightblue", border: "border-[#1A7FB555]" },
+  done: { label: "Done", dot: "#6CC4A1", bg: "bg-[#e9f6f0]", border: "border-[#6CC4A155]" },
 };
-
-const NEXT_STATUS = { todo: "doing", doing: "done", done: "todo" };
+const NEXT = { todo: "doing", doing: "done", done: "todo" };
+const FILTERS = [
+  { id: "all", label: "All" },
+  { id: "todo", label: "To Do" },
+  { id: "doing", label: "In Progress" },
+  { id: "done", label: "Done" },
+];
 const TASKS_KEY = "tasks";
-
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
-// Kanban-lite task board. One-click status cycling, manual add, AI-sourced tagging.
-// Persists to storage on every mutation (localStorage today; backend later).
 export function TaskBoard({ tasks, setTasks }) {
   const [newTask, setNewTask] = useState("");
   const [filter, setFilter] = useState("all");
@@ -24,128 +27,117 @@ export function TaskBoard({ tasks, setTasks }) {
     storage.set(TASKS_KEY, JSON.stringify(updated));
   };
 
-  const addTask = (title, source = "manual") => {
-    if (!title.trim()) return;
+  const addTask = () => {
+    const title = newTask.trim();
+    if (!title) return;
     persist([
       ...tasks,
-      {
-        id: newId(),
-        title: title.trim(),
-        status: "todo",
-        source,
-        createdAt: new Date().toISOString(),
-        notes: "",
-      },
+      { id: newId(), title, status: "todo", source: "manual", createdAt: new Date().toISOString(), notes: "" },
     ]);
     setNewTask("");
   };
 
-  const updateTask = (id, changes) =>
-    persist(tasks.map((t) => (t.id === id ? { ...t, ...changes } : t)));
+  const cycle = (id) =>
+    persist(tasks.map((t) => (t.id === id ? { ...t, status: NEXT[t.status] } : t)));
+  const remove = (id) => persist(tasks.filter((t) => t.id !== id));
 
-  const removeTask = (id) => persist(tasks.filter((t) => t.id !== id));
-
-  const filtered = filter === "all" ? tasks : tasks.filter((t) => t.status === filter);
-  const counts = {
-    todo: tasks.filter((t) => t.status === "todo").length,
-    doing: tasks.filter((t) => t.status === "doing").length,
-    done: tasks.filter((t) => t.status === "done").length,
-  };
+  const visible = filter === "all" ? tasks : tasks.filter((t) => t.status === filter);
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {["all", "todo", "doing", "done"].map((f) => (
+      <div className="mb-[18px] flex items-baseline justify-between gap-3">
+        <h2 className="m-0 text-[21px] font-extrabold tracking-[-0.01em]">Your tasks</h2>
+        <span className="text-[13px] font-semibold text-[#9aa7b1]">{tasks.length} total</span>
+      </div>
+
+      <div className="mb-[18px] flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`rounded-[20px] border-[1.5px] px-3.5 py-1.5 text-[13px] font-semibold transition ${
-              filter === f
-                ? "border-brand-ocean bg-brand-lightblue text-brand-ocean"
-                : "border-brand-border bg-white text-brand-slate"
+            key={f.id}
+            onClick={() => setFilter(f.id)}
+            className={`rounded-full px-[15px] py-2 text-[13px] font-semibold transition focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-brand-ocean ${
+              filter === f.id
+                ? "border-[1.5px] border-brand-navy bg-brand-navy text-white"
+                : "border border-brand-border bg-white text-brand-slate"
             }`}
           >
-            {f === "all" ? `All (${tasks.length})` : `${STATUS[f].label} (${counts[f]})`}
+            {f.label}
           </button>
         ))}
       </div>
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-[18px] flex gap-[9px]">
         <input
-          type="text"
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addTask(newTask)}
-          placeholder="Add a task..."
-          className="box-border flex-1 rounded-[10px] border-[1.5px] border-brand-border px-3.5 py-2.5 text-sm outline-none"
+          onKeyDown={(e) => e.key === "Enter" && addTask()}
+          placeholder="Add a task…"
+          aria-label="Add a task"
+          className="min-w-0 flex-1 rounded-[12px] border border-brand-border px-[15px] py-[13px] text-[15px] outline-none transition focus:border-brand-ocean focus:shadow-[0_0_0_3px_rgba(26,127,181,0.13)]"
         />
-        <Button
-          variant="primary"
-          className="px-[18px] py-2.5 text-sm"
-          disabled={!newTask.trim()}
-          onClick={() => addTask(newTask)}
+        <button
+          onClick={addTask}
+          className="whitespace-nowrap rounded-[12px] bg-brand-ocean px-[22px] py-[13px] text-[15px] font-bold text-white transition hover:bg-brand-navy"
         >
-          Add
-        </Button>
+          ＋ Add
+        </button>
       </div>
 
-      {filtered.length === 0 && (
-        <div className="py-8 text-center text-sm text-brand-slate">
-          {tasks.length === 0
-            ? "No tasks yet. Add one above or generate tasks from your AI plan."
-            : "No tasks in this category."}
-        </div>
-      )}
-
-      {filtered.map((t) => {
-        const sc = STATUS[t.status];
-        return (
-          <div
-            key={t.id}
-            className={`mb-2 flex items-start gap-3 rounded-card border border-brand-border bg-white px-[18px] py-3.5 ${
-              t.status === "done" ? "opacity-70" : ""
-            }`}
-          >
-            <button
-              onClick={() => updateTask(t.id, { status: NEXT_STATUS[t.status] })}
-              title={`Move to ${STATUS[NEXT_STATUS[t.status]].label}`}
-              className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md border-2 text-xs ${sc.ring} ${
-                t.status === "done" ? sc.className : "bg-transparent"
-              }`}
+      <div className="flex flex-col gap-2.5">
+        {visible.map((t) => {
+          const s = STATUS[t.status];
+          return (
+            <div
+              key={t.id}
+              className="flex items-center gap-3.5 rounded-[12px] border border-brand-border bg-white px-4 py-[15px]"
             >
-              {t.status === "done" ? "✓" : ""}
-            </button>
-
-            <div className="min-w-0 flex-1">
-              <div
-                className={`text-sm font-medium leading-snug ${
-                  t.status === "done" ? "line-through" : ""
-                }`}
+              <button
+                onClick={() => cycle(t.id)}
+                title="Click to change status"
+                className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-[13px] py-[7px] text-[12.5px] font-bold text-brand-navy focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-brand-ocean ${s.bg} ${s.border}`}
               >
-                {t.title}
-              </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                <span className={`rounded-[10px] px-2 py-px text-[11px] font-semibold ${sc.className}`}>
-                  {sc.label}
-                </span>
+                <span className="h-2 w-2 flex-none rounded-full" style={{ background: s.dot }} />
+                {s.label}
+              </button>
+              <div className="min-w-0 flex-1">
+                <div
+                  className={`text-[15px] font-semibold ${
+                    t.status === "done" ? "text-[#9aa7b1] line-through" : "text-brand-navy"
+                  }`}
+                >
+                  {t.title}
+                </div>
                 {t.source === "ai" && (
-                  <span className="rounded-[10px] bg-brand-lightblue px-2 py-px text-[11px] font-semibold text-brand-ocean">
-                    From AI Plan
-                  </span>
+                  <div className="mt-[7px] flex flex-wrap gap-1.5">
+                    <span className="rounded-md border border-brand-border bg-[#f3eee6] px-2 py-0.5 text-[11px] font-semibold text-brand-slate">
+                      From plan
+                    </span>
+                  </div>
                 )}
               </div>
+              <button
+                onClick={() => remove(t.id)}
+                title="Remove"
+                aria-label="Remove task"
+                className="px-1 text-lg leading-none text-brand-border transition hover:text-brand-coral"
+              >
+                ×
+              </button>
             </div>
+          );
+        })}
 
-            <button
-              onClick={() => removeTask(t.id)}
-              title="Remove"
-              className="px-1 text-lg leading-none text-brand-border"
-            >
-              ×
-            </button>
+        {visible.length === 0 && (
+          <div className="rounded-[12px] border border-dashed border-brand-border bg-white px-5 py-[46px] text-center text-[#9aa7b1]">
+            <div className="text-[15px] font-semibold">Nothing here yet</div>
+            <div className="mt-[5px] text-[13px]">
+              {tasks.length === 0
+                ? "Add one above, or use “Add to Tasks” on your plan."
+                : "Tasks with this status will show up here."}
+            </div>
           </div>
-        );
-      })}
+        )}
+      </div>
     </div>
   );
 }

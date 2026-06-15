@@ -1,14 +1,18 @@
-// App-wide page shell: full-height coastal gradient background + centered content column.
-export function PageShell({ children, center = false }) {
+import { Header } from "./Header.jsx";
+
+// Content column widths from the design: landing/results are wide (1120px), intake is
+// narrow (760px).
+const WIDTHS = { wide: "max-w-[1120px]", narrow: "max-w-[760px]" };
+
+// App-wide page shell: vertical coastal gradient + sticky header + centered content column.
+// Pass `onHome` to show the header's "Start over" control (omitted on the landing).
+export function PageShell({ width = "wide", onHome = null, children }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-sand via-white to-brand-lightblue font-sans text-brand-navy">
-      <div
-        className={`mx-auto max-w-[660px] px-5 pb-16 pt-8 ${
-          center ? "flex min-h-[90vh] flex-col items-center justify-center text-center" : ""
-        }`}
-      >
+    <div className="min-h-screen bg-gradient-to-b from-brand-sand via-white to-brand-lightblue font-sans text-brand-navy">
+      <Header onHome={onHome} />
+      <main className={`mx-auto ${WIDTHS[width]} px-[22px] pb-20 pt-[clamp(26px,5vw,52px)]`}>
         {children}
-      </div>
+      </main>
     </div>
   );
 }

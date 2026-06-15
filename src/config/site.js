@@ -20,18 +20,17 @@ export const SITE = {
   },
 
   landing: {
-    eyebrow: "San Diego",
-    headlineLead: "Small Business",
-    headlineEmphasis: "AI Advisor",
+    eyebrowSuffix: "Small Business",
     subhead:
-      "Answer a few quick questions about your business. Get a personalized AI toolkit, actionable tasks, and connect with local experts who can help you implement.",
+      "Answer three quick questions and get a personalized plan to put AI to work in your business — in plain English, ready to start this week.",
     cta: "Get My Free AI Plan",
     fineprint: "60 seconds · No signup · Powered by Claude",
     // Aspirational marketing copy, not measured data (see CLAUDE.md "Key Constraints").
+    // `accent` is the colored suffix (brand color key) appended after `value`.
     stats: [
-      { n: "500+", l: "SD businesses helped" },
-      { n: "4 min", l: "avg. time to first win" },
-      { n: "Free", l: "always" },
+      { value: "2,400", accent: "+", accentColor: "ocean", label: "SD businesses planned" },
+      { value: "11", accent: " hrs", accentColor: "slate", label: "saved per week, avg" },
+      { value: "4.9", accent: "★", accentColor: "coral", label: "owner rating" },
     ],
   },
 

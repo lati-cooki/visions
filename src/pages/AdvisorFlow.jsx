@@ -133,7 +133,7 @@ export function AdvisorFlow() {
 
   if (step === 1) {
     return (
-      <PageShell>
+      <PageShell width="narrow" onHome={restart}>
         <BusinessTypeStep
           businessType={businessType}
           setBusinessType={setBusinessType}
@@ -148,7 +148,7 @@ export function AdvisorFlow() {
 
   if (step === 2) {
     return (
-      <PageShell>
+      <PageShell width="narrow" onHome={restart}>
         <PainPointsStep
           painPoints={painPoints}
           togglePainPoint={togglePainPoint}
@@ -162,7 +162,7 @@ export function AdvisorFlow() {
 
   if (step === 3) {
     return (
-      <PageShell>
+      <PageShell width="narrow" onHome={restart}>
         <DetailsStep
           teamSize={teamSize}
           setTeamSize={setTeamSize}

@@ -3,7 +3,7 @@ import { ProgressDots } from "./ProgressDots.jsx";
 import { OptionButton } from "../ui/OptionButton.jsx";
 import { Button } from "../ui/Button.jsx";
 
-// Step 3: team size, budget, and optional free-text context. Submits to plan generation.
+// Step 3: team size + budget chips + optional notes. Submits to plan generation.
 export function DetailsStep({
   teamSize,
   setTeamSize,
@@ -16,13 +16,18 @@ export function DetailsStep({
   onSubmit,
 }) {
   return (
-    <>
+    <div className="[animation:vfade_.4s_ease_both]">
       <ProgressDots step={3} />
-      <h2 className="mb-6 text-2xl font-bold">A couple more details</h2>
+      <h2 className="m-0 mb-[7px] text-[clamp(24px,4vw,30px)] font-extrabold tracking-[-0.02em]">
+        Last bit — your team &amp; budget
+      </h2>
+      <p className="m-0 mb-[26px] text-[15px] text-brand-slate">
+        So the plan fits what you can actually take on.
+      </p>
 
-      <div className="mb-6">
-        <p className="mb-2.5 text-[15px] font-semibold">Team size</p>
-        <div className="grid grid-cols-2 gap-2">
+      <div className="mb-[26px]">
+        <div className="mb-3 text-[14px] font-bold">Team size</div>
+        <div className="flex flex-wrap gap-2.5">
           {TEAM_SIZES.map((t) => (
             <OptionButton key={t.id} active={teamSize === t.id} onClick={() => setTeamSize(t.id)}>
               {t.label}
@@ -31,9 +36,9 @@ export function DetailsStep({
         </div>
       </div>
 
-      <div className="mb-6">
-        <p className="mb-2.5 text-[15px] font-semibold">Monthly budget for AI tools</p>
-        <div className="grid grid-cols-2 gap-2">
+      <div className="mb-[26px]">
+        <div className="mb-3 text-[14px] font-bold">Monthly budget for tools</div>
+        <div className="flex flex-wrap gap-2.5">
           {BUDGETS.map((b) => (
             <OptionButton key={b.id} active={budget === b.id} onClick={() => setBudget(b.id)}>
               {b.label}
@@ -42,27 +47,28 @@ export function DetailsStep({
         </div>
       </div>
 
-      <div className="mb-6">
-        <p className="mb-2.5 text-[15px] font-semibold">
-          Anything else? <span className="font-normal text-brand-slate">(optional)</span>
-        </p>
+      <div>
+        <label htmlFor="v-notes" className="mb-2.5 block text-[14px] font-bold">
+          Anything else? <span className="font-medium text-[#9aa7b1]">(optional)</span>
+        </label>
         <textarea
+          id="v-notes"
           value={extraContext}
           onChange={(e) => setExtraContext(e.target.value)}
-          placeholder="E.g., I run a surf shop in PB and most of my customers find me on Instagram..."
+          placeholder="e.g. We're busiest on weekends and miss a lot of calls…"
           rows={3}
-          className="box-border w-full resize-y rounded-[10px] border-[1.5px] border-brand-border px-4 py-3 text-[15px] leading-relaxed outline-none"
+          className="w-full resize-y rounded-[12px] border border-brand-border px-[15px] py-[13px] text-[15px] leading-relaxed outline-none transition focus:border-brand-ocean focus:shadow-[0_0_0_3px_rgba(26,127,181,0.13)]"
         />
       </div>
 
-      <div className="flex justify-between">
-        <Button variant="ghost" onClick={onBack}>
+      <div className="mt-[34px] flex justify-between gap-3">
+        <Button variant="outline" onClick={onBack}>
           ← Back
         </Button>
         <Button disabled={!canAdvance} onClick={onSubmit}>
-          Get My AI Plan ✨
+          See my plan →
         </Button>
       </div>
-    </>
+    </div>
   );
 }
