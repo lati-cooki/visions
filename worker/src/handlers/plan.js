@@ -3,6 +3,7 @@ import { validateProfile, normalizeProfile } from "../lib/validate.js";
 import { buildPlanRequest, buildPlanMessage } from "../lib/prompts.js";
 import { callMessages, extractText, parseJsonText } from "../lib/anthropic.js";
 import { runAgent } from "../lib/agents.js";
+import { verifyTurnstile } from "../lib/turnstile.js";
 import { insertPlan } from "../lib/db.js";
 import { newId } from "../lib/ids.js";
 
@@ -13,6 +14,9 @@ export async function planHandler(request, env) {
   const body = await readJson(request);
   const invalid = validateProfile(body);
   if (invalid) return error(invalid, 400);
+
+  // Gate the credit-spending call behind Turnstile before doing any work.
+  await verifyTurnstile(env, body?.turnstileToken, request.headers.get("CF-Connecting-IP"));
 
   const profile = normalizeProfile(body);
 
