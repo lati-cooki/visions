@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { SITE } from "../config/site.js";
+import { saveBooking } from "../lib/api.js";
 import { OptionButton } from "./ui/OptionButton.jsx";
 import { Button } from "./ui/Button.jsx";
 
@@ -9,9 +10,9 @@ const TEXT_FIELDS = [
   { key: "phone", label: "Phone", placeholder: "(619) 555-0123", type: "tel" },
 ];
 
-// Consultation booking modal. Scaffold-only: submitting just flips to a confirmation state.
-// Wiring to email/Calendly + the bookings table is a Phase 1 follow-up (see CLAUDE.md).
-export function BookingModal({ onClose }) {
+// Consultation booking modal. Persists the request via POST /api/booking (the bookings
+// table), then shows a confirmation. `planId` links the booking to the plan when present.
+export function BookingModal({ planId, onClose }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -20,8 +21,24 @@ export function BookingModal({ onClose }) {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const submit = async () => {
+    if (!form.name || !form.email || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await saveBooking({ planId, ...form });
+      setSubmitted(true);
+    } catch {
+      setSubmitError("Couldn't send your request. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -105,12 +122,15 @@ export function BookingModal({ onClose }) {
                 />
               </div>
 
+              {submitError && (
+                <p className="m-0 text-[13px] text-brand-coral">{submitError}</p>
+              )}
               <Button
                 className="mt-2 w-full"
-                disabled={!form.name || !form.email}
-                onClick={() => setSubmitted(true)}
+                disabled={!form.name || !form.email || submitting}
+                onClick={submit}
               >
-                Request Consultation →
+                {submitting ? "Sending..." : "Request Consultation →"}
               </Button>
             </div>
           </>

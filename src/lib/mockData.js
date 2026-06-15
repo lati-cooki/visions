@@ -52,6 +52,19 @@ export function mockPlan(profile) {
   };
 }
 
+// Stands in for GET /api/plan/:id in mock mode (e.g. opening a /plan/:id link in dev).
+// The originating profile isn't known from the id alone, so we return a representative one.
+export function mockSavedPlan(id) {
+  const profile = {
+    businessType: "your business",
+    painPoints: ["Getting more customers / leads"],
+    teamSize: "2–5 people",
+    budget: "Under $100/mo",
+    extraContext: "",
+  };
+  return { id, profile, plan: mockPlan(profile), createdAt: new Date().toISOString() };
+}
+
 export function mockChatReply(message) {
   return (
     `Great question. (This is placeholder output — the live AI advisor turns on once the ` +

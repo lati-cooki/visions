@@ -1,0 +1,26 @@
+name = "visions"
+main = "worker/src/index.js"
+compatibility_date = "2026-06-12"
+
+# Static frontend (Vite build output). The Worker runs first only for /api/* routes
+# (run_worker_first); everything else is served from ./dist with SPA fallback so client
+# routes like /plan/:id resolve to index.html. Requires Wrangler >= 4.20.0.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = [ "/api/*" ]
+
+# D1 database (provisioned in the wnam region). Bound as env.DB inside the Worker.
+[[d1_databases]]
+binding = "DB"
+database_name = "visions"
+database_id = "bc66bda7-fb57-445b-8d1c-7d92e2e865a3"
+
+# Non-secret config. Location lives here so the backend prompt is market-configurable,
+# mirroring src/config/site.js on the frontend. The Anthropic key is a SECRET, set via:
+#   wrangler secret put ANTHROPIC_API_KEY
+[vars]
+LOCATION_NAME = "San Diego"
+LOCATION_FLAVOR = "tourism seasons, border trade, the military community, and beach/surf culture"
+ANTHROPIC_MODEL = "claude-sonnet-4-6"

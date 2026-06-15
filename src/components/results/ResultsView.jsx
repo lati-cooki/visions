@@ -5,8 +5,8 @@ import { TaskBoard } from "./TaskBoard.jsx";
 import { ProviderDirectory } from "./ProviderDirectory.jsx";
 import { BookingModal } from "../BookingModal.jsx";
 
-// Step 4: results surface. Owns the loading/error states and the tabbed plan/tasks/directory
-// views. All data + handlers are passed down from App; this component is layout + routing.
+// Step 4 / shared-plan surface: owns the loading/error states and the tabbed
+// plan/tasks/directory views. All data + handlers are passed in; this is layout + routing.
 export function ResultsView({
   loading,
   error,
@@ -15,6 +15,7 @@ export function ResultsView({
   profile,
   businessLabel,
   onRestart,
+  restartLabel = "Start Over",
   activeTab,
   setActiveTab,
   tasks,
@@ -22,7 +23,8 @@ export function ResultsView({
   onAddTasks,
   onSavePlan,
   planSaved,
-  shareId,
+  shareUrl,
+  planId,
   showBooking,
   setShowBooking,
 }) {
@@ -69,7 +71,7 @@ export function ResultsView({
           <h2 className="m-0 mt-1 text-[22px] font-bold">{businessLabel}</h2>
         </div>
         <Button variant="outline" className="border px-3.5 py-1.5 text-[13px]" onClick={onRestart}>
-          Start Over
+          {restartLabel}
         </Button>
       </div>
 
@@ -97,7 +99,7 @@ export function ResultsView({
           onSavePlan={onSavePlan}
           onBook={() => setShowBooking(true)}
           planSaved={planSaved}
-          shareId={shareId}
+          shareUrl={shareUrl}
         />
       )}
 
@@ -127,7 +129,9 @@ export function ResultsView({
         <ProviderDirectory onGetListed={() => setShowBooking(true)} />
       )}
 
-      {showBooking && <BookingModal onClose={() => setShowBooking(false)} />}
+      {showBooking && (
+        <BookingModal planId={planId} onClose={() => setShowBooking(false)} />
+      )}
     </PageShell>
   );
 }

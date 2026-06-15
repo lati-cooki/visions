@@ -13,7 +13,7 @@ export function PlanView({
   onSavePlan,
   onBook,
   planSaved,
-  shareId,
+  shareUrl,
 }) {
   return (
     <>
@@ -30,9 +30,10 @@ export function PlanView({
         </button>
         <button
           onClick={onSavePlan}
-          className="rounded-[10px] border-[1.5px] border-brand-border bg-white px-3.5 py-2 text-[13px] font-medium text-brand-navy"
+          disabled={!shareUrl}
+          className="rounded-[10px] border-[1.5px] border-brand-border bg-white px-3.5 py-2 text-[13px] font-medium text-brand-navy disabled:opacity-50"
         >
-          {planSaved ? "✓ Saved" : "💾 Save Plan"}
+          {planSaved ? "✓ Link Copied" : "🔗 Save & Share"}
         </button>
         <button
           onClick={onBook}
@@ -42,10 +43,15 @@ export function PlanView({
         </button>
       </div>
 
-      {planSaved && shareId && (
+      {planSaved && shareUrl && (
         <Card className="border-[1.5px] border-brand-ocean/30 bg-brand-lightblue px-[18px] py-3.5 text-[13px]">
-          <span className="font-semibold">Plan saved!</span> Share this ID with your consultant:{" "}
-          <code className="rounded bg-white px-2 py-0.5 text-sm font-bold">{shareId}</code>
+          <span className="font-semibold">Link copied!</span> Share or revisit your plan at:{" "}
+          <a
+            href={shareUrl}
+            className="break-all font-semibold text-brand-ocean underline"
+          >
+            {shareUrl}
+          </a>
         </Card>
       )}
 
