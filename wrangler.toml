@@ -36,7 +36,7 @@ ANTHROPIC_MODEL = "claude-sonnet-4-6"
 # (l8ti.com). TO is the owner address that receives alerts — set before launch; the email
 # send no-ops while TO is blank, so bookings still persist either way.
 BOOKING_NOTIFY_FROM = "bookings@l8ti.com"
-BOOKING_NOTIFY_TO = "troylati@gmail.com"
+BOOKING_NOTIFY_TO = "troy@l8ti.com"
 
 # Backend path for plan/chat generation:
 #   "true"  → drive the Managed Agent (sessions) below
