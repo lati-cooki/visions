@@ -29,6 +29,6 @@ ANTHROPIC_MODEL = "claude-sonnet-4-6"
 #   "true"  → drive the Managed Agent (sessions) below
 #   "false" → call the Messages API directly with structured outputs
 # Both paths still authenticate with the ANTHROPIC_API_KEY secret.
-USE_MANAGED_AGENT = "true"
+USE_MANAGED_AGENT = "false"
 AGENT_ID = "agent_011CZtoh5iVJGPjFmdXkSDzo"
 AGENT_ENV_ID = "env_015fkJc7jYAiMT6vN1DMPMBt"
