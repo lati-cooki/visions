@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildBookingEmail } from "../src/lib/email.js";
+import { buildBookingEmail, buildVerifyCodeEmail, buildPlanEmail } from "../src/lib/email.js";
+
+const FROM = { email: "plans@l8ti.com", name: "Visions" };
 
 test("buildBookingEmail composes subject and body from a full booking", () => {
   const msg = buildBookingEmail(
@@ -35,4 +37,35 @@ test("buildBookingEmail omits empty optional fields and notes no message", () =>
   assert.doesNotMatch(msg.text, /Preferred:/);
   assert.doesNotMatch(msg.text, /Plan:/);
   assert.match(msg.text, /\(no message\)/);
+});
+
+test("buildVerifyCodeEmail puts the code in subject + body", () => {
+  const msg = buildVerifyCodeEmail("owner@biz.com", "123456", FROM);
+  assert.equal(msg.to, "owner@biz.com");
+  assert.deepEqual(msg.from, FROM);
+  assert.match(msg.subject, /123456/);
+  assert.match(msg.text, /123456/);
+  assert.match(msg.text, /expires/i);
+});
+
+test("buildPlanEmail includes headline, quick wins, next step, and link", () => {
+  const plan = {
+    headline: "Your focused AI plan",
+    quick_wins: [
+      { title: "Automate FAQs", description: "Stand up an assistant.", monthly_cost: "$0-20/mo" },
+      { title: "Batch social", description: "Draft a week at once." },
+    ],
+    next_step: "Pick the easiest win.",
+  };
+  const msg = buildPlanEmail("owner@biz.com", plan, "https://l8ti.com/plan/abc123", FROM);
+  assert.match(msg.text, /Your focused AI plan/);
+  assert.match(msg.text, /Automate FAQs/);
+  assert.match(msg.text, /\$0-20\/mo/);
+  assert.match(msg.text, /Pick the easiest win/);
+  assert.match(msg.text, /https:\/\/l8ti\.com\/plan\/abc123/);
+});
+
+test("buildPlanEmail tolerates a sparse plan", () => {
+  const msg = buildPlanEmail("owner@biz.com", {}, "https://l8ti.com/plan/x", FROM);
+  assert.match(msg.text, /https:\/\/l8ti\.com\/plan\/x/);
 });
