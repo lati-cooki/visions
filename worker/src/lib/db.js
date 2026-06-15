@@ -9,6 +9,13 @@ const safeParse = (text, fallback) => {
   }
 };
 
+// Midnight-UTC ISO string for the day containing `nowMs`. Used for daily-cap windows;
+// ISO timestamps sort lexicographically, so `created_at >= startOfUtcDayIso(...)` works.
+export function startOfUtcDayIso(nowMs) {
+  const d = new Date(nowMs);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())).toISOString();
+}
+
 export async function insertPlan(env, { id, profile, recommendations }) {
   await env.DB.prepare(
     `INSERT INTO plans
