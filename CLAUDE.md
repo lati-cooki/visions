@@ -34,7 +34,9 @@ stateless HMAC token that `/api/plan` requires) plus **daily spend caps** — a 
 (default 3) and a global cap (default 200, ~$10/day) counted from the `plans` table, which is the
 real spend ceiling — and per-IP rate limiting. Plans are emailed to the verified address on
 generation; booking notifications email the owner (both pending the l8ti.com Email Sending domain
-onboarding). Task tracking was removed; the emailed plan is now the "keep it" mechanism. Sobriety
+onboarding). Task tracking was removed; the emailed plan is now the "keep it" mechanism. An
+**Access-gated admin page** at `/admin` (read-only Bookings/Plans tables + CSV export), gated by
+Cloudflare Access at the edge with Worker-side JWT verification as defense-in-depth. Sobriety
 Pursuit was relocated to **sp.l8ti.com** (separate `l8ticom` Worker). See
 `docs/superpowers/specs|plans/2026-06-15-l8ti-cutover*`.
 
@@ -83,10 +85,11 @@ vite.config.js · tailwind.config.js · postcss.config.js · wrangler.toml · sc
 migrations/  2026-06-15-email-gate.sql   # one-time migration (db:migrate:local/remote)
 src/                                # ── Frontend (Vite + React) ──
   main.jsx                          # BrowserRouter
-  App.jsx                           # routes: "/" → AdvisorFlow, "/plan/:id" → SharedPlan
+  App.jsx                           # routes: "/" → AdvisorFlow, "/plan/:id" → SharedPlan, "/admin" → AdminPage
   pages/
     AdvisorFlow.jsx                 # intake → verify → plan → results state machine
     SharedPlan.jsx                  # loads + renders a saved plan
+    AdminPage.jsx                   # Access-gated admin: Bookings/Plans tabs, read-only, CSV export
   config/   site.js · providers.js  # brand + "San Diego" + SD provider directory
   data/     intake.js               # business types, pain points, team sizes, budgets
   lib/      api.js (mock-or-fetch) · mockData.js · profile.js
@@ -98,8 +101,8 @@ src/                                # ── Frontend (Vite + React) ──
 worker/                             # ── Backend (zero-dep Cloudflare Worker) ──
   src/
     index.js                        # fetch handler + dispatch
-    lib/      http.js · router.js · validate.js · prompts.js · anthropic.js · agents.js · db.js · ids.js · verifyToken.js · code.js · email.js
-    handlers/ plan.js · getPlan.js · chat.js · booking.js · verifyStart.js · verifyCheck.js
+    lib/      http.js · router.js · validate.js · prompts.js · anthropic.js · agents.js · db.js · ids.js · verifyToken.js · code.js · email.js · access.js · csv.js
+    handlers/ plan.js · getPlan.js · chat.js · booking.js · verifyStart.js · verifyCheck.js · adminBookings.js · adminPlans.js
   test/       router · validate · prompts · anthropic · agents  (node --test)
 agents/                             # Managed Agent definition (visions-advisor.agent.yaml) + apply guide
 docs/prototype/sd-biz-ai-advisor.jsx   # original Claude.ai artifact (archival)
@@ -116,6 +119,8 @@ docs/prototype/sd-biz-ai-advisor.jsx   # original Claude.ai artifact (archival)
 | `GET /api/plan/:id`     | —                                             | `{ id, profile, plan, createdAt }`   |
 | `POST /api/chat`        | `{ profile, headline, history[], message }`   | `{ reply }`                          |
 | `POST /api/booking`     | `{ planId?, name, email, phone, preferred, message }` | `{ ok, id }`                 |
+| `GET /api/admin/bookings`| — (`?format=csv` → CSV)                      | `{ bookings: [...] }` (Cloudflare Access-gated; newest-first) |
+| `GET /api/admin/plans`  | — (`?format=csv` → CSV)                       | `{ plans: [...] }` (Cloudflare Access-gated; summary fields incl. parsed headline, newest-first) |
 
 The frontend's `src/lib/api.js` is the client for this contract; in mock mode it returns
 `src/lib/mockData.js` shaped identically.
@@ -139,7 +144,8 @@ The frontend's `src/lib/api.js` is the client for this contract; in mock mode it
 | Backend | Zero-dependency Worker, raw `fetch` | Troy's "zero-dependency, no framework" standard; no SDK to bundle. |
 | Generation path | Managed Agent (sessions) or Messages API, via `USE_MANAGED_AGENT` | Drives `agent_011CZtoh5iVJGPjFmdXkSDzo` in `env_015fkJc7jYAiMT6vN1DMPMBt` per request; both paths use the `ANTHROPIC_API_KEY` secret. Agent path is prompt-enforced JSON + heavier; Messages path keeps schema-guaranteed structured outputs. See `agents/`. |
 | Persistence | Cloudflare D1 (`plans` w/ `email`, `bookings`, `email_verifications`; `providers` reserved) | Serverless SQL; enables share/load + lead capture + verification + analytics. |
-| Routing | react-router-dom (`/`, `/plan/:id`) | Shareable plan URLs + a load flow. |
+| Routing | react-router-dom (`/`, `/plan/:id`, `/admin`) | Shareable plan URLs + a load flow + the admin page. |
+| Admin auth | Cloudflare Access (Zero Trust) gates `/admin*` + `/api/admin/*` at the edge; the Worker re-verifies the `Cf-Access-Jwt-Assertion` JWT (RS256 via Web Crypto against the team JWKS, checks aud+exp, fails closed; `worker/src/lib/access.js`) | No secrets — Access uses public-key JWTs; edge gate + Worker check is defense-in-depth. Config via Worker vars `ACCESS_TEAM_DOMAIN` + `ACCESS_AUD`; `.dev.vars` `ACCESS_DEV_BYPASS=true` skips it for local `wrangler dev`. |
 | Key handling | Worker secret (`ANTHROPIC_API_KEY`) | Never in the client bundle. |
 | Config-driven location | `src/config/site.js` + Worker `[vars]` | Keeps "San Diego" out of code for future markets. |
 | Email gate + spend caps | Turnstile-gated email verification (stateless HMAC token) + per-email & global daily caps counted from `plans` | Verification is the friction/identity layer; disposable emails weaken it, so the **global daily cap is the real spend guarantee** (~$10/day). |
@@ -170,6 +176,13 @@ The frontend's `src/lib/api.js` is the client for this contract; in mock mode it
   schema (`plans.email` column + `email_verifications` table) via `migrations/2026-06-15-email-gate.sql`.
 - [x] Task board removed — deleted `TaskBoard.jsx`, `lib/tasks.js`, `lib/storage.js`, the Tasks
   tab + "Add to Tasks" buttons, and the reserved `tasks` D1 table; the emailed plan replaces it.
+- [x] Access-gated admin page (`/admin` → `src/pages/AdminPage.jsx`): read-only Bookings/Plans
+  tables (newest-first) with per-tab CSV download; plan rows link to the public `/plan/:id`.
+  Backed by `GET /api/admin/bookings` + `GET /api/admin/plans` (`?format=csv` returns CSV) via
+  `worker/src/handlers/adminBookings.js` + `adminPlans.js` and `db.js` `listBookings`/`listPlans`.
+  Gated by Cloudflare Access + Worker JWT verification (`worker/src/lib/access.js`); CSV
+  serialization in `worker/src/lib/csv.js`. Read-only by design — no edit/delete; plan detail
+  reuses the public `/plan/:id` page.
 - N/A Managed Agent definition — superseded by the Messages API path (`USE_MANAGED_AGENT="false"`).
 
 ### Phase 1 — follow-ups
@@ -179,6 +192,9 @@ The frontend's `src/lib/api.js` is the client for this contract; in mock mode it
 - [ ] Go-live for the email gate: set `VERIFY_TOKEN_SECRET` + `VERIFY_CODE_PEPPER` secrets
   (`wrangler secret put …`) and run `npm run db:migrate:remote` once.
 - [ ] Rotate the Turnstile secret key (it was shared during setup).
+- [ ] Admin go-live: create the Cloudflare Access (Zero Trust) app covering `/admin*` +
+  `/api/admin/*`, then set Worker vars `ACCESS_TEAM_DOMAIN` + `ACCESS_AUD` (empty until the app
+  exists) — the admin page is gated/unusable in prod until both are done.
 
 ### Phase 2 (growth)
 - [ ] Email capture + drip; DB-driven provider directory with submission/approval (tables

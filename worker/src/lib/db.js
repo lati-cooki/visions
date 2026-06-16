@@ -141,3 +141,32 @@ export async function countPlansSince(env, sinceIso) {
     .first();
   return row?.n || 0;
 }
+
+// ── Admin list helpers ──
+export async function listBookings(env, limit = 1000) {
+  const { results } = await env.DB.prepare(
+    `SELECT id, plan_id, name, email, phone, preferred_time, message, created_at
+       FROM bookings ORDER BY created_at DESC LIMIT ?`
+  )
+    .bind(limit)
+    .all();
+  return results || [];
+}
+
+export async function listPlans(env, limit = 1000) {
+  const { results } = await env.DB.prepare(
+    `SELECT id, business_type, email, team_size, budget, recommendations, created_at
+       FROM plans ORDER BY created_at DESC LIMIT ?`
+  )
+    .bind(limit)
+    .all();
+  return (results || []).map((r) => ({
+    id: r.id,
+    business_type: r.business_type,
+    email: r.email,
+    team_size: r.team_size,
+    budget: r.budget,
+    created_at: r.created_at,
+    headline: safeParse(r.recommendations, {})?.headline || "",
+  }));
+}

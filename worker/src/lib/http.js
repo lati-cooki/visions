@@ -25,6 +25,17 @@ export function json(data, status = 200) {
   });
 }
 
+export function csv(text, filename) {
+  return new Response(text, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      ...CORS,
+    },
+  });
+}
+
 export function error(message, status = 400) {
   return json({ error: message }, status);
 }

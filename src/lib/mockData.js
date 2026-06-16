@@ -73,3 +73,45 @@ export function mockChatReply(message) {
     `the perfect tool.`
   );
 }
+
+// Stand-ins for the Access-gated admin lists in mock mode (so `npm run dev` renders /admin).
+export function mockAdminBookings() {
+  const now = new Date().toISOString();
+  return [
+    {
+      id: "bk_demo1",
+      plan_id: "pl_demo1",
+      name: "Maria Lopez",
+      email: "maria@harborcafe.com",
+      phone: "619-555-0142",
+      preferred_time: "Weekday mornings",
+      message: "Want help setting up online ordering before summer.",
+      created_at: now,
+    },
+    {
+      id: "bk_demo2",
+      plan_id: null,
+      name: "Devon Park",
+      email: "devon@parkstudio.com",
+      phone: "",
+      preferred_time: "Afternoons",
+      message: "",
+      created_at: now,
+    },
+  ];
+}
+
+export function mockAdminPlans() {
+  const now = new Date().toISOString();
+  return [
+    {
+      id: "pl_demo1",
+      business_type: "Cafe / Coffee shop",
+      email: "maria@harborcafe.com",
+      team_size: "2–5 people",
+      budget: "Under $100/mo",
+      created_at: now,
+      headline: "A focused AI starter plan for your cafe — quick wins first.",
+    },
+  ];
+}

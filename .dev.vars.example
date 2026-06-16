@@ -11,3 +11,6 @@ VERIFY_TOKEN_SECRET=dev-verify-token-secret-change-me
 VERIFY_CODE_PEPPER=dev-code-pepper-change-me
 # Echo the 6-digit code in the verify/start response instead of emailing it (DEV ONLY).
 VERIFY_DEV_ECHO=true
+
+# Admin page — skip Access JWT verification for local `wrangler dev` (DEV ONLY).
+ACCESS_DEV_BYPASS=true

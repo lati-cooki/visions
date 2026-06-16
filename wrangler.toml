@@ -54,6 +54,12 @@ PER_EMAIL_DAILY_CAP = "3"
 VERIFY_CODE_TTL_MIN = "10"
 VERIFY_TOKEN_TTL_MIN = "30"
 
+# Admin page (Cloudflare Access). Fill these from the Access self-hosted app you create
+# (Zero Trust → Access → Applications) covering /admin* + /api/admin/*. No secrets — Access
+# uses public-key JWTs. Empty = the admin API fails closed (403) until configured.
+ACCESS_TEAM_DOMAIN = ""   # e.g. "laticooki.cloudflareaccess.com"
+ACCESS_AUD = ""           # the Application Audience (AUD) tag from the Access app
+
 # Per-IP rate limiting (Workers Rate Limiting, GA) backing the verify + plan endpoints
 # (Turnstile gates verify/start; an email-verification token + daily caps gate /api/plan).
 # period must be 10 or 60 (seconds). Enforced on Cloudflare's network only (not in `wrangler dev`).
