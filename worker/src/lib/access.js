@@ -22,14 +22,15 @@ export function parseJwt(token) {
   if (typeof token !== "string") throw new ApiError("Access required.", 403);
   const parts = token.split(".");
   if (parts.length !== 3) throw new ApiError("Access denied.", 403);
-  let header, payload;
+  let header, payload, signature;
   try {
     header = b64urlToJson(parts[0]);
     payload = b64urlToJson(parts[1]);
+    signature = b64urlToBytes(parts[2]);
   } catch {
     throw new ApiError("Access denied.", 403);
   }
-  return { header, payload, signingInput: `${parts[0]}.${parts[1]}`, signature: b64urlToBytes(parts[2]) };
+  return { header, payload, signingInput: `${parts[0]}.${parts[1]}`, signature };
 }
 
 // Pure: validate the audience + expiry. nowMs is injectable for tests.
