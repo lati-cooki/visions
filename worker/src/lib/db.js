@@ -170,3 +170,24 @@ export async function listPlans(env, limit = 1000) {
     headline: safeParse(r.recommendations, {})?.headline || "",
   }));
 }
+
+// Full plan records (incl. parsed recommendations + pain_points) for the data export.
+export async function listPlansFull(env, limit = 1000) {
+  const { results } = await env.DB.prepare(
+    `SELECT id, business_type, pain_points, team_size, budget, extra_context, recommendations, created_at, email
+       FROM plans ORDER BY created_at DESC LIMIT ?`
+  )
+    .bind(limit)
+    .all();
+  return (results || []).map((r) => ({
+    id: r.id,
+    business_type: r.business_type,
+    pain_points: safeParse(r.pain_points, []),
+    team_size: r.team_size,
+    budget: r.budget,
+    extra_context: r.extra_context,
+    email: r.email,
+    created_at: r.created_at,
+    recommendations: safeParse(r.recommendations, null),
+  }));
+}
