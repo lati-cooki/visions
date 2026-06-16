@@ -57,8 +57,8 @@ VERIFY_TOKEN_TTL_MIN = "30"
 # Admin page (Cloudflare Access). Fill these from the Access self-hosted app you create
 # (Zero Trust → Access → Applications) covering /admin* + /api/admin/*. No secrets — Access
 # uses public-key JWTs. Empty = the admin API fails closed (403) until configured.
-ACCESS_TEAM_DOMAIN = ""   # e.g. "laticooki.cloudflareaccess.com"
-ACCESS_AUD = ""           # the Application Audience (AUD) tag from the Access app
+ACCESS_TEAM_DOMAIN = "laticooki.cloudflareaccess.com"
+ACCESS_AUD = "f28e923f6cfb58b004e4720a7f81967a288a303ff64e761fd1fbdfdc72dcb670"
 
 # Per-IP rate limiting (Workers Rate Limiting, GA) backing the verify + plan endpoints
 # (Turnstile gates verify/start; an email-verification token + daily caps gate /api/plan).
