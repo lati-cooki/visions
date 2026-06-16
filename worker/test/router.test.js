@@ -32,3 +32,9 @@ test("routes the verify endpoints", () => {
   assert.deepEqual(resolveRoute("POST", "/api/verify/check"), { name: "verifyCheck" });
   assert.equal(resolveRoute("GET", "/api/verify/start"), null);
 });
+
+test("routes the admin endpoints", () => {
+  assert.deepEqual(resolveRoute("GET", "/api/admin/bookings"), { name: "adminBookings" });
+  assert.deepEqual(resolveRoute("GET", "/api/admin/plans"), { name: "adminPlans" });
+  assert.equal(resolveRoute("POST", "/api/admin/bookings"), null);
+});
