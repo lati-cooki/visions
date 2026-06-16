@@ -38,3 +38,8 @@ test("routes the admin endpoints", () => {
   assert.deepEqual(resolveRoute("GET", "/api/admin/plans"), { name: "adminPlans" });
   assert.equal(resolveRoute("POST", "/api/admin/bookings"), null);
 });
+
+test("routes the admin export endpoint", () => {
+  assert.deepEqual(resolveRoute("GET", "/api/admin/export"), { name: "adminExport" });
+  assert.equal(resolveRoute("POST", "/api/admin/export"), null);
+});
