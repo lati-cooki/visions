@@ -5,7 +5,13 @@
 // (.env.production) and these call the Cloudflare Worker, which holds the Anthropic key and
 // persists to D1. The fetch paths below are the real contract.
 
-import { mockPlan, mockSavedPlan, mockChatReply } from "./mockData.js";
+import {
+  mockPlan,
+  mockSavedPlan,
+  mockChatReply,
+  mockAdminBookings,
+  mockAdminPlans,
+} from "./mockData.js";
 
 const USE_MOCK = (import.meta.env.VITE_USE_MOCK ?? "true") !== "false";
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
@@ -80,4 +86,26 @@ export async function saveBooking(payload) {
     return { ok: true, id: mockId() };
   }
   return postJson("/api/booking", payload);
+}
+
+// Admin lists (Access-gated server-side). Mock mode returns sample rows so /admin renders
+// without a backend or Cloudflare Access.
+export async function getAdminBookings() {
+  if (USE_MOCK) {
+    await delay(300);
+    return { bookings: mockAdminBookings() };
+  }
+  const res = await fetch(`${API_BASE}/api/admin/bookings`);
+  if (!res.ok) throw new Error(`API returned ${res.status}`);
+  return res.json();
+}
+
+export async function getAdminPlans() {
+  if (USE_MOCK) {
+    await delay(300);
+    return { plans: mockAdminPlans() };
+  }
+  const res = await fetch(`${API_BASE}/api/admin/plans`);
+  if (!res.ok) throw new Error(`API returned ${res.status}`);
+  return res.json();
 }
