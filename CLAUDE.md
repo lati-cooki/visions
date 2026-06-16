@@ -101,8 +101,8 @@ src/                                # ── Frontend (Vite + React) ──
 worker/                             # ── Backend (zero-dep Cloudflare Worker) ──
   src/
     index.js                        # fetch handler + dispatch
-    lib/      http.js · router.js · validate.js · prompts.js · anthropic.js · agents.js · db.js · ids.js · verifyToken.js · code.js · email.js · access.js · csv.js
-    handlers/ plan.js · getPlan.js · chat.js · booking.js · verifyStart.js · verifyCheck.js · adminBookings.js · adminPlans.js
+    lib/      http.js · router.js · validate.js · prompts.js · anthropic.js · agents.js · db.js · ids.js · verifyToken.js · code.js · email.js · access.js · csv.js · export.js
+    handlers/ plan.js · getPlan.js · chat.js · booking.js · verifyStart.js · verifyCheck.js · adminBookings.js · adminPlans.js · adminExport.js
   test/       router · validate · prompts · anthropic · agents  (node --test)
 agents/                             # Managed Agent definition (visions-advisor.agent.yaml) + apply guide
 docs/prototype/sd-biz-ai-advisor.jsx   # original Claude.ai artifact (archival)
@@ -121,6 +121,7 @@ docs/prototype/sd-biz-ai-advisor.jsx   # original Claude.ai artifact (archival)
 | `POST /api/booking`     | `{ planId?, name, email, phone, preferred, message }` | `{ ok, id }`                 |
 | `GET /api/admin/bookings`| — (`?format=csv` → CSV)                      | `{ bookings: [...] }` (Cloudflare Access-gated; newest-first) |
 | `GET /api/admin/plans`  | — (`?format=csv` → CSV)                       | `{ plans: [...] }` (Cloudflare Access-gated; summary fields incl. parsed headline, newest-first) |
+| `GET /api/admin/export` | — (Cloudflare Access-gated)                   | JSON file attachment: `{ exported_at, bookings[], plans[] (full recommendations) }` |
 
 The frontend's `src/lib/api.js` is the client for this contract; in mock mode it returns
 `src/lib/mockData.js` shaped identically.

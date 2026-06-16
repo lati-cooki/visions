@@ -25,15 +25,19 @@ export function json(data, status = 200) {
   });
 }
 
-export function csv(text, filename) {
-  return new Response(text, {
+export function download(body, filename, contentType) {
+  return new Response(body, {
     status: 200,
     headers: {
-      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Type": contentType,
       "Content-Disposition": `attachment; filename="${filename}"`,
       ...CORS,
     },
   });
+}
+
+export function csv(text, filename) {
+  return download(text, filename, "text/csv; charset=utf-8");
 }
 
 export function error(message, status = 400) {

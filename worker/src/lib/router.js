@@ -13,5 +13,6 @@ export function resolveRoute(method, pathname) {
   if (method === "POST" && pathname === "/api/verify/check") return { name: "verifyCheck" };
   if (method === "GET" && pathname === "/api/admin/bookings") return { name: "adminBookings" };
   if (method === "GET" && pathname === "/api/admin/plans") return { name: "adminPlans" };
+  if (method === "GET" && pathname === "/api/admin/export") return { name: "adminExport" };
   return null;
 }

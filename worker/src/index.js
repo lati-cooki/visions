@@ -14,6 +14,7 @@ import { verifyStartHandler } from "./handlers/verifyStart.js";
 import { verifyCheckHandler } from "./handlers/verifyCheck.js";
 import { adminBookingsHandler } from "./handlers/adminBookings.js";
 import { adminPlansHandler } from "./handlers/adminPlans.js";
+import { adminExportHandler } from "./handlers/adminExport.js";
 
 export default {
   async fetch(request, env, ctx) {
@@ -62,6 +63,8 @@ export default {
           return await adminBookingsHandler(request, env);
         case "adminPlans":
           return await adminPlansHandler(request, env);
+        case "adminExport":
+          return await adminExportHandler(request, env);
         default:
           return error("Not found.", 404);
       }
