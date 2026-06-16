@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildBookingEmail, buildVerifyCodeEmail, buildPlanEmail } from "../src/lib/email.js";
+import {
+  buildBookingEmail,
+  buildBookingConfirmationEmail,
+  buildVerifyCodeEmail,
+  buildPlanEmail,
+} from "../src/lib/email.js";
 
 const FROM = { email: "plans@l8ti.com", name: "Visions" };
 
@@ -37,6 +42,35 @@ test("buildBookingEmail omits empty optional fields and notes no message", () =>
   assert.doesNotMatch(msg.text, /Preferred:/);
   assert.doesNotMatch(msg.text, /Plan:/);
   assert.match(msg.text, /\(no message\)/);
+});
+
+test("buildBookingConfirmationEmail thanks the customer and links the plan", () => {
+  const booking = {
+    name: "Sam",
+    email: "sam@biz.com",
+    preferred: "Weekday mornings",
+    message: "Mostly weekends are busy",
+    planId: "abc123",
+  };
+  const msg = buildBookingConfirmationEmail(booking, booking.email, FROM, "https://l8ti.com");
+  assert.equal(msg.to, "sam@biz.com");
+  assert.deepEqual(msg.from, FROM);
+  assert.match(msg.subject, /consultation request/i);
+  assert.match(msg.text, /Hi Sam/);
+  assert.match(msg.text, /Weekday mornings/);
+  assert.match(msg.text, /Mostly weekends are busy/);
+  assert.match(msg.text, /https:\/\/l8ti\.com\/plan\/abc123/);
+});
+
+test("buildBookingConfirmationEmail omits the plan link when there's no planId", () => {
+  const msg = buildBookingConfirmationEmail(
+    { name: "Sam", email: "sam@biz.com" },
+    "sam@biz.com",
+    FROM,
+    "https://l8ti.com"
+  );
+  assert.match(msg.text, /Hi Sam/);
+  assert.doesNotMatch(msg.text, /\/plan\//);
 });
 
 test("buildVerifyCodeEmail puts the code in subject + body", () => {
