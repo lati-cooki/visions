@@ -20,6 +20,29 @@ export function buildBookingEmail(booking, to, from) {
   return { to, from, subject, text: lines.join("\n") };
 }
 
+// Pure: compose the customer-facing confirmation sent after a booking. Short "we got it"
+// note recapping what they sent, with a link back to their plan when the booking came from
+// one. `to` is the customer's email; `from` is a { email, name } object.
+export function buildBookingConfirmationEmail(booking, to, from, siteUrl) {
+  const subject = "We got your consultation request — Visions";
+  const base = (siteUrl || "").replace(/\/$/, "");
+  const lines = [
+    `Hi ${booking.name},`,
+    "",
+    "Thanks for requesting a consultation with Visions — we've got it and will reach out " +
+      "soon to set up a time. Just reply to this email if you'd like to add anything.",
+    "",
+    "What you sent us:",
+    booking.preferred ? `- Preferred time: ${booking.preferred}` : null,
+    booking.message ? `- Your note: ${booking.message}` : null,
+    booking.planId && base ? `\nYour AI plan: ${base}/plan/${booking.planId}` : null,
+    "",
+    "Talk soon,",
+    "The Visions team",
+  ].filter((line) => line !== null);
+  return { to, from, subject, text: lines.join("\n") };
+}
+
 function escapeHtml(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -37,6 +60,28 @@ export async function sendBookingEmail(env, booking) {
     to: msg.to,
     from: msg.from,
     replyTo: booking.email || undefined,
+    subject: msg.subject,
+    text: msg.text,
+    html: `<pre style="font:inherit;white-space:pre-wrap">${escapeHtml(msg.text)}</pre>`,
+  });
+  return true;
+}
+
+// Send the customer their booking confirmation. No-op (returns false) when email isn't
+// configured or the booking has no email, so a booking never depends on it. Throws on a
+// real send failure; the caller runs this non-fatally via ctx.waitUntil.
+export async function sendBookingConfirmationEmail(env, booking) {
+  if (!env.EMAIL || !env.BOOKING_NOTIFY_FROM || !booking.email) return false;
+  const msg = buildBookingConfirmationEmail(
+    booking,
+    booking.email,
+    { email: env.BOOKING_NOTIFY_FROM, name: "Visions" },
+    env.SITE_URL
+  );
+  await env.EMAIL.send({
+    to: msg.to,
+    from: msg.from,
+    replyTo: env.BOOKING_NOTIFY_TO || undefined,
     subject: msg.subject,
     text: msg.text,
     html: `<pre style="font:inherit;white-space:pre-wrap">${escapeHtml(msg.text)}</pre>`,
