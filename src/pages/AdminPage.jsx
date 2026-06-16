@@ -50,12 +50,20 @@ export function AdminPage() {
     <PageShell width="wide">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="m-0 text-[26px] font-extrabold tracking-[-0.02em]">Admin</h1>
-        <a
-          href={csvHref(tab)}
-          className="rounded-[11px] border border-brand-border bg-white px-4 py-2.5 text-[14px] font-bold text-brand-slate transition hover:border-brand-ocean hover:text-brand-navy"
-        >
-          ↓ Download {tab === "bookings" ? "bookings" : "plans"} CSV
-        </a>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <a
+            href="/api/admin/export"
+            className="rounded-[11px] bg-brand-ocean px-4 py-2.5 text-[14px] font-bold text-white transition hover:bg-brand-navy"
+          >
+            ⬇ Export all data
+          </a>
+          <a
+            href={csvHref(tab)}
+            className="rounded-[11px] border border-brand-border bg-white px-4 py-2.5 text-[14px] font-bold text-brand-slate transition hover:border-brand-ocean hover:text-brand-navy"
+          >
+            ↓ Download {tab === "bookings" ? "bookings" : "plans"} CSV
+          </a>
+        </div>
       </div>
 
       <div className="mb-5 flex gap-1 border-b border-brand-border">
