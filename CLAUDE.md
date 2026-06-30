@@ -103,7 +103,7 @@ worker/                             # ── Backend (zero-dep Cloudflare Worker
     index.js                        # fetch handler + dispatch
     lib/      http.js · router.js · validate.js · prompts.js · anthropic.js · agents.js · db.js · ids.js · verifyToken.js · code.js · email.js · access.js · csv.js · export.js
     handlers/ plan.js · getPlan.js · chat.js · booking.js · verifyStart.js · verifyCheck.js · adminBookings.js · adminPlans.js · adminExport.js
-  test/       router · validate · prompts · anthropic · agents  (node --test)
+  test/       router · validate · validate.extra · prompts · anthropic · agents · handlers · db · http · ids · code · email · csv · export · access · dates · turnstile · verifyToken  (node --test; 92 tests)
 agents/                             # Managed Agent definition (visions-advisor.agent.yaml) + apply guide
 docs/prototype/sd-biz-ai-advisor.jsx   # original Claude.ai artifact (archival)
 ```
@@ -117,10 +117,10 @@ docs/prototype/sd-biz-ai-advisor.jsx   # original Claude.ai artifact (archival)
 | `POST /api/verify/check`| `{ email, code }`                             | `{ token }` (stateless HMAC token, ~30 min TTL; 5-attempt cap per code) |
 | `POST /api/plan`        | profile `{ businessType, painPoints[], teamSize, budget, extraContext }` + `verifyToken` | `{ id, plan }` (verifies the token, enforces per-email + global daily caps, persists the verified email, emails the plan; also persisted) |
 | `GET /api/plan/:id`     | —                                             | `{ id, profile, plan, createdAt }`   |
-| `POST /api/chat`        | `{ profile, headline, history[], message }`   | `{ reply }`                          |
+| `POST /api/chat`        | `{ planId, profile, headline, history[], message }` — `planId` must reference a persisted plan (auth gate) | `{ reply }` |
 | `POST /api/booking`     | `{ planId?, name, email, phone, preferred, message }` | `{ ok, id }`                 |
-| `GET /api/admin/bookings`| — (`?format=csv` → CSV)                      | `{ bookings: [...] }` (Cloudflare Access-gated; newest-first) |
-| `GET /api/admin/plans`  | — (`?format=csv` → CSV)                       | `{ plans: [...] }` (Cloudflare Access-gated; summary fields incl. parsed headline, newest-first) |
+| `GET /api/admin/bookings`| — (`?format=csv` → CSV)                      | `{ bookings: [...], total, capped }` (Cloudflare Access-gated; newest-first; `capped` true when results are truncated) |
+| `GET /api/admin/plans`  | — (`?format=csv` → CSV)                       | `{ plans: [...], total, capped }` (Cloudflare Access-gated; summary fields incl. parsed headline, newest-first) |
 | `GET /api/admin/export` | — (Cloudflare Access-gated)                   | JSON file attachment: `{ exported_at, bookings[], plans[] (full recommendations) }` |
 
 The frontend's `src/lib/api.js` is the client for this contract; in mock mode it returns
@@ -187,15 +187,34 @@ The frontend's `src/lib/api.js` is the client for this contract; in mock mode it
 - N/A Managed Agent definition — superseded by the Messages API path (`USE_MANAGED_AGENT="false"`).
 
 ### Phase 1 — follow-ups
-- [ ] Onboard l8ti.com to Email Sending (above) — **prerequisite** to activate booking
-  notifications **and** verification-code/plan delivery; the email gate is non-functional in prod
-  until then.
-- [ ] Go-live for the email gate: set `VERIFY_TOKEN_SECRET` + `VERIFY_CODE_PEPPER` secrets
-  (`wrangler secret put …`) and run `npm run db:migrate:remote` once.
-- [ ] Rotate the Turnstile secret key (it was shared during setup).
-- [ ] Admin go-live: create the Cloudflare Access (Zero Trust) app covering `/admin*` +
-  `/api/admin/*`, then set Worker vars `ACCESS_TEAM_DOMAIN` + `ACCESS_AUD` (empty until the app
-  exists) — the admin page is gated/unusable in prod until both are done.
+
+**Email gate go-live (two manual steps + one command):**
+
+1. **Onboard l8ti.com to Cloudflare Email Sending** — dashboard-only action:
+   Cloudflare Dashboard → Compute → Email Service → Email Sending → Onboard Domain → `l8ti.com`.
+   This unblocks both verification-code delivery and plan/booking notification emails.
+   Cannot be scripted; must be done in the Cloudflare dashboard first.
+
+2. **Set `CLOUDFLARE_API_TOKEN`** — add it as a secret in Cursor Cloud Agents:
+   [cursor.com/settings](https://cursor.com/settings) → Cloud Agents → Secrets → `CLOUDFLARE_API_TOKEN`.
+   This lets Cloud Agents run wrangler commands on your behalf.
+
+3. **Run `npm run activate`** — one command that:
+   - Generates and sets `VERIFY_TOKEN_SECRET` (random 32-byte hex) if not already set
+   - Generates and sets `VERIFY_CODE_PEPPER` (random 32-byte hex) if not already set
+   - Applies the email-gate D1 migration to production (`db:migrate:remote`)
+   - Builds and deploys the Worker
+   
+   Script: `scripts/activate-email-gate.mjs`
+
+- [ ] Onboard l8ti.com to Email Sending (step 1 above — dashboard only)
+- [ ] Add `CLOUDFLARE_API_TOKEN` to Cursor Cloud Agents secrets (step 2 above)
+- [ ] Run `npm run activate` (step 3 above — after steps 1 & 2)
+- [ ] Rotate the Turnstile secret key (it was shared during setup):
+  `wrangler secret put TURNSTILE_SECRET_KEY`
+- [ ] Admin go-live: verify the Cloudflare Access (Zero Trust) app covers `/admin*` +
+  `/api/admin/*` — `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD` are already set in `wrangler.toml`
+  (`laticooki.cloudflareaccess.com`); confirm the Access app exists and the audience tag matches.
 
 ### Phase 2 (growth)
 - [ ] Email capture + drip; DB-driven provider directory with submission/approval (tables
