@@ -19,6 +19,7 @@ export function ResultsView({
   profile,
   businessLabel,
   onRestart,
+  restartLabel,
   activeTab,
   setActiveTab,
   onSavePlan,
@@ -30,7 +31,7 @@ export function ResultsView({
 }) {
   if (loading) {
     return (
-      <PageShell width="wide" onHome={onRestart}>
+      <PageShell width="wide" onHome={onRestart} restartLabel={restartLabel}>
         <div className="pt-24 text-center">
           <div className="mb-5 animate-pulse text-[44px]">🤖</div>
           <h2 className="mb-2 text-[22px] font-semibold">Building your AI plan...</h2>
@@ -44,7 +45,7 @@ export function ResultsView({
 
   if (error) {
     return (
-      <PageShell width="wide" onHome={onRestart}>
+      <PageShell width="wide" onHome={onRestart} restartLabel={restartLabel}>
         <div className="pt-20 text-center">
           <p className="mb-5 text-base text-brand-coral">{error}</p>
           <Button onClick={onRetry}>Try Again</Button>
@@ -56,7 +57,7 @@ export function ResultsView({
   if (!recommendations) return null;
 
   return (
-    <PageShell width="wide" onHome={onRestart}>
+    <PageShell width="wide" onHome={onRestart} restartLabel={restartLabel}>
       <div className="mb-7 flex gap-1 overflow-x-auto border-b border-brand-border">
         {TABS.map((t) => (
           <button
@@ -78,6 +79,7 @@ export function ResultsView({
           recommendations={recommendations}
           profile={profile}
           businessLabel={businessLabel}
+          planId={planId}
           onSavePlan={onSavePlan}
           onBook={() => setShowBooking(true)}
           planSaved={planSaved}

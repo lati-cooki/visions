@@ -48,11 +48,12 @@ test("normalizeProfile trims and defaults", () => {
   assert.equal(p.extraContext, "hi");
 });
 
-test("validateChat checks the message", () => {
-  assert.equal(validateChat({ message: "How do I start?" }), null);
-  assert.match(validateChat({ message: "" }), /message is required/);
-  assert.match(validateChat({ message: "x".repeat(2001) }), /too long/);
-  assert.match(validateChat({ message: "ok", history: "nope" }), /history/);
+test("validateChat checks planId and message", () => {
+  assert.equal(validateChat({ planId: "abc", message: "How do I start?" }), null);
+  assert.match(validateChat({ message: "How do I start?" }), /planId is required/);
+  assert.match(validateChat({ planId: "abc", message: "" }), /message is required/);
+  assert.match(validateChat({ planId: "abc", message: "x".repeat(2001) }), /too long/);
+  assert.match(validateChat({ planId: "abc", message: "ok", history: "nope" }), /history/);
 });
 
 test("validateBooking requires name and a valid email", () => {

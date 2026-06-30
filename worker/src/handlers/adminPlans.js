@@ -15,11 +15,12 @@ const COLUMNS = [
 ];
 
 // GET /api/admin/plans[?format=csv] — Access-gated plan list (summary fields).
+// Response includes `total` and `capped` so the UI can surface "showing X of Y".
 export async function adminPlansHandler(request, env) {
   await verifyAccessJwt(env, request);
-  const rows = await listPlans(env);
+  const { rows, total, capped } = await listPlans(env);
   if (new URL(request.url).searchParams.get("format") === "csv") {
     return csv(toCsv(rows, COLUMNS), "plans.csv");
   }
-  return json({ plans: rows });
+  return json({ plans: rows, total, capped });
 }

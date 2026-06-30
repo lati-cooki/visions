@@ -7,6 +7,7 @@ export function PlanView({
   recommendations,
   profile,
   businessLabel,
+  planId,
   onSavePlan,
   onBook,
   planSaved,
@@ -158,7 +159,7 @@ export function PlanView({
         )}
       </div>
 
-      <FollowUpChat profile={profile} headline={recommendations.headline} />
+      <FollowUpChat planId={planId} profile={profile} headline={recommendations.headline} />
     </div>
   );
 }

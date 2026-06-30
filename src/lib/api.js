@@ -17,7 +17,7 @@ const USE_MOCK = (import.meta.env.VITE_USE_MOCK ?? "true") !== "false";
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const mockId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const mockId = () => crypto.randomUUID().replace(/-/g, "");
 
 async function postJson(path, payload) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -25,7 +25,18 @@ async function postJson(path, payload) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(`API returned ${res.status}`);
+  if (!res.ok) {
+    let message;
+    try {
+      const body = await res.json();
+      message = body?.error || `Request failed (${res.status})`;
+    } catch {
+      message = `Request failed (${res.status})`;
+    }
+    const err = new Error(message);
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
 }
 
@@ -69,13 +80,13 @@ export async function getPlan(id) {
   return res.json();
 }
 
-// Ask a follow-up question. The backend carries profile + plan headline as context.
-export async function sendChat({ profile, headline, history, message }) {
+// Ask a follow-up question. `planId` is required in production (auth gate on the server).
+export async function sendChat({ planId, profile, headline, history, message }) {
   if (USE_MOCK) {
     await delay(700);
     return mockChatReply(message);
   }
-  const data = await postJson("/api/chat", { profile, headline, history, message });
+  const data = await postJson("/api/chat", { planId, profile, headline, history, message });
   return data.reply;
 }
 
@@ -93,7 +104,8 @@ export async function saveBooking(payload) {
 export async function getAdminBookings() {
   if (USE_MOCK) {
     await delay(300);
-    return { bookings: mockAdminBookings() };
+    const rows = mockAdminBookings();
+    return { bookings: rows, total: rows.length, capped: false };
   }
   const res = await fetch(`${API_BASE}/api/admin/bookings`);
   if (!res.ok) throw new Error(`API returned ${res.status}`);
@@ -103,7 +115,8 @@ export async function getAdminBookings() {
 export async function getAdminPlans() {
   if (USE_MOCK) {
     await delay(300);
-    return { plans: mockAdminPlans() };
+    const rows = mockAdminPlans();
+    return { plans: rows, total: rows.length, capped: false };
   }
   const res = await fetch(`${API_BASE}/api/admin/plans`);
   if (!res.ok) throw new Error(`API returned ${res.status}`);

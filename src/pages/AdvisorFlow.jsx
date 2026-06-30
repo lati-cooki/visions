@@ -72,7 +72,11 @@ export function AdvisorFlow() {
       setPlanId(id);
     } catch (err) {
       console.error("Plan generation error:", err);
-      setError("Something went wrong generating your plan. Please try again.");
+      setError(
+        err?.message && err.message !== "Incomplete response"
+          ? err.message
+          : "Something went wrong generating your plan. Please try again."
+      );
     } finally {
       setLoading(false);
     }

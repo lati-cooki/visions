@@ -1,9 +1,9 @@
-// Mock plan + chat data for the scaffold-only phase.
+// Mock plan + chat data used when VITE_USE_MOCK=true (default in `npm run dev`).
 //
-// The backend Worker (which holds the Anthropic key and builds the prompt) isn't wired up
-// yet, so these stand in for real model output. They match the exact JSON shape the real
-// endpoint will return, so swapping in the live API is a config flip (VITE_USE_MOCK=false),
-// not a component change. The mock leans lightly on the profile so the demo feels personalized.
+// These stand in for real model output and match the exact JSON shape the backend returns,
+// so the UI is fully demoable without a running backend. Swap to the live API with a
+// config flip (VITE_USE_MOCK=false) — no component changes needed. The mock leans lightly
+// on the profile so the demo feels personalized.
 
 export function mockPlan(profile) {
   const biz = profile?.businessType || "your business";

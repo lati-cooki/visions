@@ -23,7 +23,11 @@ const td = "px-3 py-2.5 align-top text-[14px] text-brand-navy";
 export function AdminPage() {
   const [tab, setTab] = useState("bookings");
   const [bookings, setBookings] = useState(null);
+  const [bookingsTotal, setBookingsTotal] = useState(null);
+  const [bookingsCapped, setBookingsCapped] = useState(false);
   const [plans, setPlans] = useState(null);
+  const [plansTotal, setPlansTotal] = useState(null);
+  const [plansCapped, setPlansCapped] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -33,7 +37,11 @@ export function AdminPage() {
         const [b, p] = await Promise.all([getAdminBookings(), getAdminPlans()]);
         if (active) {
           setBookings(b.bookings || []);
+          setBookingsTotal(b.total ?? null);
+          setBookingsCapped(b.capped ?? false);
           setPlans(p.plans || []);
+          setPlansTotal(p.total ?? null);
+          setPlansCapped(p.capped ?? false);
         }
       } catch {
         if (active) setError("Couldn't load admin data. Make sure you're signed in.");
@@ -45,6 +53,8 @@ export function AdminPage() {
   }, []);
 
   const rows = tab === "bookings" ? bookings : plans;
+  const rowsTotal = tab === "bookings" ? bookingsTotal : plansTotal;
+  const rowsCapped = tab === "bookings" ? bookingsCapped : plansCapped;
 
   return (
     <PageShell width="wide">
@@ -78,13 +88,22 @@ export function AdminPage() {
             }`}
           >
             {t.label}
-            {t.id === "bookings" && bookings ? ` (${bookings.length})` : ""}
-            {t.id === "plans" && plans ? ` (${plans.length})` : ""}
+            {t.id === "bookings" && bookings != null
+                ? ` (${bookings.length}${bookingsTotal != null && bookingsCapped ? ` of ${bookingsTotal}` : ""})`
+                : ""}
+            {t.id === "plans" && plans != null
+                ? ` (${plans.length}${plansTotal != null && plansCapped ? ` of ${plansTotal}` : ""})`
+                : ""}
           </button>
         ))}
       </div>
 
       {error && <p className="text-[15px] font-semibold text-brand-coral">{error}</p>}
+      {!error && rowsCapped && rowsTotal != null && (
+        <p className="mb-3 text-[13px] text-brand-slate">
+          Showing {rows?.length} of {rowsTotal} rows. Download the CSV or JSON export for the full list.
+        </p>
+      )}
       {!error && rows === null && <p className="text-[15px] text-brand-slate">Loading…</p>}
       {!error && rows && rows.length === 0 && (
         <div className="rounded-[12px] border border-dashed border-brand-border bg-white px-5 py-12 text-center text-[#9aa7b1]">
