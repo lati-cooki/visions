@@ -25,9 +25,10 @@ export function LogoMark({ size = 34 }) {
   );
 }
 
-// Sticky, blurred app header: logo + wordmark + market badge, with an optional "Start over"
-// control (shown on intake/results, hidden on the landing).
-export function Header({ onHome }) {
+// Sticky, blurred app header: logo + wordmark + market badge, with an optional restart
+// control (shown on intake/results, hidden on the landing). `restartLabel` overrides the
+// default "Start over" text — useful on shared plan pages where "New Plan" is clearer.
+export function Header({ onHome, restartLabel = "Start over" }) {
   return (
     <header className="sticky top-0 z-30 border-b border-brand-border bg-brand-sand/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-[22px] py-3">
@@ -43,7 +44,7 @@ export function Header({ onHome }) {
             onClick={onHome}
             className="inline-flex items-center gap-[7px] rounded-[10px] border border-brand-border bg-white px-3.5 py-2 text-[13px] font-semibold text-brand-slate transition hover:border-brand-ocean hover:text-brand-navy focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-brand-ocean"
           >
-            ↺ Start over
+            ↺ {restartLabel}
           </button>
         )}
       </div>

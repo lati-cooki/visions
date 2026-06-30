@@ -2,8 +2,9 @@ import { useState } from "react";
 import { sendChat } from "../../lib/api.js";
 
 // Post-plan follow-up chat. Carries the profile + plan headline as context so answers stay
-// grounded without regenerating the plan.
-export function FollowUpChat({ profile, headline }) {
+// grounded without regenerating the plan. `planId` is required in production so the server
+// can verify the request is tied to a real persisted plan.
+export function FollowUpChat({ planId, profile, headline }) {
   const [followUp, setFollowUp] = useState("");
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -16,7 +17,7 @@ export function FollowUpChat({ profile, headline }) {
     setHistory(nextHistory);
     setLoading(true);
     try {
-      const reply = await sendChat({ profile, headline, history, message });
+      const reply = await sendChat({ planId, profile, headline, history, message });
       setHistory([...nextHistory, { role: "assistant", content: reply }]);
     } catch {
       setHistory([

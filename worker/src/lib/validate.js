@@ -12,7 +12,7 @@ export function validateProfile(body) {
   if (body.businessType.length > 200) return "businessType is too long.";
   if (!Array.isArray(body.painPoints) || body.painPoints.length === 0)
     return "At least one pain point is required.";
-  if (body.painPoints.length > 10) return "Too many pain points.";
+  if (body.painPoints.length > 4) return "Too many pain points (max 4).";
   if (!body.painPoints.every((p) => typeof p === "string" && p.length <= 200))
     return "Invalid pain point.";
   if (
@@ -34,13 +34,26 @@ export function normalizeProfile(body) {
   };
 }
 
+// Maximum history turns (user+assistant pairs) sent per chat request.
+export const MAX_CHAT_HISTORY = 20;
+
 export function validateChat(body) {
   if (!body || typeof body !== "object") return "Missing request body.";
+  if (typeof body.planId !== "string" || !body.planId.trim())
+    return "planId is required.";
   if (typeof body.message !== "string" || !body.message.trim())
     return "message is required.";
   if (body.message.length > 2000) return "message is too long.";
-  if (body.history != null && !Array.isArray(body.history))
-    return "history must be an array.";
+  if (body.history != null) {
+    if (!Array.isArray(body.history)) return "history must be an array.";
+    if (body.history.length > MAX_CHAT_HISTORY)
+      return `history is too long (max ${MAX_CHAT_HISTORY} messages).`;
+    for (const msg of body.history) {
+      if (!msg || typeof msg !== "object") return "Invalid history entry.";
+      if (typeof msg.content !== "string" || msg.content.length > 2000)
+        return "A history message is too long.";
+    }
+  }
   return null;
 }
 

@@ -90,12 +90,12 @@ export async function sendBookingConfirmationEmail(env, booking) {
 }
 
 // ── Verification code email (critical path: awaited by the handler) ──
-export function buildVerifyCodeEmail(toEmail, code, from) {
+export function buildVerifyCodeEmail(toEmail, code, from, ttlMin = 10) {
   const subject = `Your Visions code: ${code}`;
   const text = [
     `Your verification code is: ${code}`,
     "",
-    "Enter this code to get your AI plan. It expires in 10 minutes.",
+    `Enter this code to get your AI plan. It expires in ${ttlMin} minute${ttlMin === 1 ? "" : "s"}.`,
     "If you didn't request this, you can safely ignore this email.",
   ].join("\n");
   return { to: toEmail, from, subject, text };
@@ -107,7 +107,8 @@ export async function sendVerifyCodeEmail(env, toEmail, code) {
     if (env.VERIFY_DEV_ECHO === "true") return false;
     throw new ApiError("Email is not configured.", 500);
   }
-  const msg = buildVerifyCodeEmail(toEmail, code, { email: env.VERIFY_EMAIL_FROM, name: "Visions" });
+  const ttlMin = Number(env.VERIFY_CODE_TTL_MIN || 10);
+  const msg = buildVerifyCodeEmail(toEmail, code, { email: env.VERIFY_EMAIL_FROM, name: "Visions" }, ttlMin);
   await env.EMAIL.send({
     to: msg.to,
     from: msg.from,

@@ -15,11 +15,12 @@ const COLUMNS = [
 ];
 
 // GET /api/admin/bookings[?format=csv] — Access-gated lead list.
+// Response includes `total` and `capped` so the UI can surface "showing X of Y".
 export async function adminBookingsHandler(request, env) {
   await verifyAccessJwt(env, request);
-  const rows = await listBookings(env);
+  const { rows, total, capped } = await listBookings(env);
   if (new URL(request.url).searchParams.get("format") === "csv") {
     return csv(toCsv(rows, COLUMNS), "bookings.csv");
   }
-  return json({ bookings: rows });
+  return json({ bookings: rows, total, capped });
 }

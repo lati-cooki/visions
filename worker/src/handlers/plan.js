@@ -64,6 +64,18 @@ export async function planHandler(request, env, ctx) {
     throw new ApiError("The AI returned an incomplete plan. Please try again.", 502);
   }
 
+  // Re-check caps immediately before writing to narrow the TOCTOU window (concurrent
+  // requests may both pass the first check above while the AI call is in flight).
+  if ((await countPlansForEmailSince(env, email, dayStart)) >= perEmailCap) {
+    throw new ApiError(
+      `You've reached today's limit of ${perEmailCap} plans for this email. Try again tomorrow.`,
+      429
+    );
+  }
+  if ((await countPlansSince(env, dayStart)) >= globalCap) {
+    throw new ApiError("We've hit today's capacity. Please check back tomorrow.", 429);
+  }
+
   const id = newId();
   await insertPlan(env, { id, profile, recommendations: plan, email });
 

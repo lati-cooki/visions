@@ -99,3 +99,15 @@ namespace_id = "1004"
   [ratelimits.simple]
   limit = 10
   period = 60
+
+[[ratelimits]]
+name = "BOOKING_RATE_LIMITER"
+namespace_id = "1005"
+
+  [ratelimits.simple]
+  limit = 10
+  period = 60
+
+# Cron trigger for scheduled cleanup of expired email_verifications (runs daily at 03:00 UTC).
+[triggers]
+crons = ["0 3 * * *"]

@@ -11,6 +11,14 @@ import { signVerifyToken } from "../lib/verifyToken.js";
 
 const MAX_ATTEMPTS = 5;
 
+// Constant-time string comparison to prevent timing attacks on hex hash comparison.
+function timingSafeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 // POST /api/verify/check — validates a code, returns a short-lived verification token.
 export async function verifyCheckHandler(request, env) {
   const body = await readJson(request);
@@ -29,7 +37,9 @@ export async function verifyCheckHandler(request, env) {
 
   await incrementVerificationAttempts(env, row.id);
   const provided = await hashCode(env.VERIFY_CODE_PEPPER, email, body.code.trim());
-  if (provided !== row.code_hash) {
+
+  // Use constant-time comparison to prevent timing-based oracle on the hash.
+  if (!timingSafeEqual(provided, row.code_hash)) {
     return error("That code isn't right. Please try again.", 400);
   }
 

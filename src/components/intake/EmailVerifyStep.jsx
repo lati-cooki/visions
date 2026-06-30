@@ -31,8 +31,8 @@ export function EmailVerifyStep({ onBack, onVerified }) {
       const res = await startVerification(email.trim(), turnstileToken);
       setSent(true);
       setDevCode(res?.devCode || null);
-    } catch {
-      setError("We couldn't send your code. Please try again.");
+    } catch (err) {
+      setError(err?.message || "We couldn't send your code. Please try again.");
     } finally {
       setBusy(false);
       setTurnstileToken(""); // single-use
@@ -47,8 +47,12 @@ export function EmailVerifyStep({ onBack, onVerified }) {
       const { token } = await checkVerification(email.trim(), code.trim());
       if (!token) throw new Error("no token");
       onVerified(token);
-    } catch {
-      setError("That code isn't right or has expired. Try again, or resend a new code.");
+    } catch (err) {
+      setError(
+        err?.message && err.message !== "no token"
+          ? err.message
+          : "That code isn't right or has expired. Try again, or resend a new code."
+      );
     } finally {
       setBusy(false);
     }

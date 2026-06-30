@@ -143,24 +143,35 @@ export async function countPlansSince(env, sinceIso) {
 }
 
 // ── Admin list helpers ──
-export async function listBookings(env, limit = 1000) {
+// Default page size for admin lists. Callers receive `{ rows, total, capped }` so
+// the UI can surface "showing X of Y" when results are truncated.
+const ADMIN_LIST_LIMIT = 500;
+
+export async function listBookings(env, limit = ADMIN_LIST_LIMIT) {
+  const countRow = await env.DB.prepare(`SELECT count(*) AS n FROM bookings`).first();
+  const total = countRow?.n || 0;
+
   const { results } = await env.DB.prepare(
     `SELECT id, plan_id, name, email, phone, preferred_time, message, created_at
        FROM bookings ORDER BY created_at DESC LIMIT ?`
   )
     .bind(limit)
     .all();
-  return results || [];
+  const rows = results || [];
+  return { rows, total, capped: rows.length < total };
 }
 
-export async function listPlans(env, limit = 1000) {
+export async function listPlans(env, limit = ADMIN_LIST_LIMIT) {
+  const countRow = await env.DB.prepare(`SELECT count(*) AS n FROM plans`).first();
+  const total = countRow?.n || 0;
+
   const { results } = await env.DB.prepare(
     `SELECT id, business_type, email, team_size, budget, recommendations, created_at
        FROM plans ORDER BY created_at DESC LIMIT ?`
   )
     .bind(limit)
     .all();
-  return (results || []).map((r) => ({
+  const rows = (results || []).map((r) => ({
     id: r.id,
     business_type: r.business_type,
     email: r.email,
@@ -169,10 +180,11 @@ export async function listPlans(env, limit = 1000) {
     created_at: r.created_at,
     headline: safeParse(r.recommendations, {})?.headline || "",
   }));
+  return { rows, total, capped: rows.length < total };
 }
 
 // Full plan records (incl. parsed recommendations + pain_points) for the data export.
-export async function listPlansFull(env, limit = 1000) {
+export async function listPlansFull(env, limit = ADMIN_LIST_LIMIT) {
   const { results } = await env.DB.prepare(
     `SELECT id, business_type, pain_points, team_size, budget, extra_context, recommendations, created_at, email
        FROM plans ORDER BY created_at DESC LIMIT ?`
@@ -190,4 +202,22 @@ export async function listPlansFull(env, limit = 1000) {
     created_at: r.created_at,
     recommendations: safeParse(r.recommendations, null),
   }));
+}
+
+// ── Scheduled maintenance ──
+// Delete verification rows that are fully expired (expires_at in the past) or consumed
+// and older than 7 days. Safe to run repeatedly; D1 prepared statements use parameterized
+// values so no injection risk.
+export async function deleteExpiredVerifications(env) {
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { meta } = await env.DB.prepare(
+    `DELETE FROM email_verifications
+       WHERE (expires_at < ? AND consumed_at IS NULL)
+          OR (consumed_at IS NOT NULL AND created_at < ?)`
+  )
+    .bind(cutoff, cutoff)
+    .run();
+  const deleted = meta?.changes ?? 0;
+  if (deleted > 0) console.log(`Cleaned up ${deleted} expired verification row(s).`);
+  return deleted;
 }
